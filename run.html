@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>지옥철 출근런 : 8시 59분 (Rush Hour: 8:59 AM)</title>
+    <!-- 웹폰트: Press Start 2P(레트로 픽셀) & Pretendard(국문) & Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pretendard:wght@500;700;800;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --subway-green: #00a84d; /* 2호선 초록 */
+            --subway-dark: #071a10;
+            --neon-lime: #00ff66;
+            --danger-red: #ff2a5f;
+            --coffee-blue: #00e5ff;
+            --bg-night: #0b0d13;
+            --card-bg: #141824;
+            --border-glow: rgba(0, 255, 102, 0.4);
+            --font-pixel: 'Press Start 2P', monospace;
+            --font-sans: 'Pretendard', -apple-system, sans-serif;
+            --font-eng: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-night);
+            font-family: var(--font-sans);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 메인 아케이드 뷰포트 래퍼 */
+        .arcade-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            max-height: 520px;
+            aspect-ratio: 16 / 9;
+            background: #000000;
+            border: 3px solid #202736;
+            box-shadow: 0 0 50px rgba(0, 255, 102, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 920px) {
+            .arcade-wrapper {
+                max-width: 100%;
+                max-height: 100%;
+                aspect-ratio: auto;
+                border: none;
+            }
+        }
+
+        /* 캔버스 화면 */
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #111420;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            touch-action: none;
+        }
+
+        /* 오버레이 공통 (로비, 일시정지, 게임오버, 클리어) */
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 10, 16, 0.94);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            z-index: 50;
+            transition: opacity 0.25s ease;
+        }
+
+        .game-overlay.hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 1. 타이틀 & 로비 */
+        .subway-station-sign {
+            background: #000000;
+            border: 3px solid var(--subway-green);
+            border-radius: 9999px;
+            padding: 0.4rem 1.6rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.6rem;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+
+        .station-num {
+            background: var(--subway-green);
+            color: #000000;
+            font-family: var(--font-eng);
+            font-weight: 800;
+            font-size: 0.85rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .station-name {
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+        }
+
+        .game-main-title {
+            font-family: var(--font-sans);
+            font-size: clamp(1.8rem, 4vw, 2.7rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(0, 255, 102, 0.5);
+            margin-bottom: 0.25rem;
+        }
+
+        .game-sub-title {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* 15명 멤버 캐릭터 선택 캐러셀 */
+        .char-select-wrap {
+            width: 100%;
+            max-width: 680px;
+            background: rgba(20, 24, 36, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .char-select-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--neon-lime);
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.6rem;
+        }
+
+        .char-scroll-box {
+            display: flex;
+            gap: 0.6rem;
+            overflow-x: auto;
+            padding-bottom: 0.4rem;
+            scrollbar-width: thin;
+        }
+
+        .char-scroll-box::-webkit-scrollbar {
+            height: 5px;
+        }
+        .char-scroll-box::-webkit-scrollbar-thumb {
+            background: var(--subway-green);
+            border-radius: 10px;
+        }
+
+        .char-thumb-btn {
+            background: #0d1017;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 0.4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 68px;
+            flex-shrink: 0;
+        }
+
+        .char-thumb-btn:hover {
+            border-color: var(--neon-lime);
+            transform: translateY(-2px);
+        }
+
+        .char-thumb-btn.active {
+            border-color: var(--neon-lime);
+            background: rgba(0, 255, 102, 0.15);
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+            transform: translateY(-4px) scale(1.05);
+        }
+
+        .char-thumb-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 0.3rem;
+            background: #181c28;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .char-thumb-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .char-thumb-name {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        /* 선택된 캐릭터 스킬 뱃지 바 */
+        .char-status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #090c12;
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            margin-top: 0.4rem;
+            font-size: 0.8rem;
+        }
+
+        .char-status-skill {
+            color: var(--neon-lime);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* 시작 버튼 */
+        .btn-launch {
+            background: linear-gradient(135deg, var(--neon-lime), #00ba4a);
+            color: #000000;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 2.5rem;
+            font-family: var(--font-sans);
+            font-size: 1.15rem;
+            font-weight: 900;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.5);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-launch:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+            box-shadow: 0 0 35px rgba(0, 255, 102, 0.7);
+        }
+
+        .btn-launch:active {
+            transform: scale(0.98);
+        }
+
+        /* 조작 가이드 안내 */
+        .control-guide-bar {
+            margin-top: 0.8rem;
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .key-badge {
+            background: #252d3d;
+            border: 1px solid #3b475e;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: var(--font-eng);
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        /* 모바일 온스크린 조작 버튼 (화면 하단 터치 영역) */
+        .touch-action-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .touch-action-btn {
+            pointer-events: auto;
+            width: 90px;
+            height: 70px;
+            background: rgba(20, 24, 36, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            color: #ffffff;
+            font-family: var(--font-eng);
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            touch-action: manipulation;
+            transition: all 0.1s ease;
+        }
+
+        .touch-action-btn:active, .touch-action-btn.active {
+            background: rgba(0, 255, 102, 0.3);
+            border-color: var(--neon-lime);
+            color: var(--neon-lime);
+            transform: scale(0.94);
+        }
+
+        .touch-action-btn.slide-btn {
+            border-color: rgba(0, 229, 255, 0.4);
+        }
+        .touch-action-btn.slide-btn:active {
+            background: rgba(0, 229, 255, 0.3);
+            border-color: var(--coffee-blue);
+            color: var(--coffee-blue);
+        }
+
+        /* 결과 화면 (클리어 / 지각) */
+        .result-card {
+            background: #141824;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 1.75rem 2rem;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        .result-stamp {
+            display: inline-block;
+            font-family: var(--font-pixel);
+            font-size: 2.2rem;
+            padding: 0.4rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.05em;
+            transform: rotate(-3deg);
+        }
+
+        .result-stamp.safe {
+            color: var(--neon-lime);
+            border: 3px solid var(--neon-lime);
+            text-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+        }
+
+        .result-stamp.late {
+            color: var(--danger-red);
+            border: 3px solid var(--danger-red);
+            text-shadow: 0 0 20px rgba(255, 42, 95, 0.5);
+            box-shadow: 0 0 20px rgba(255, 42, 95, 0.2);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 0.35rem;
+        }
+
+        .result-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        .result-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-cell {
+            background: #0c0f17;
+            padding: 0.6rem 0.4rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-cell-label {
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-cell-val {
+            font-family: var(--font-eng);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .btn-again {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--neon-lime);
+            color: #000000;
+            border: none;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 1.05rem;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-again:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-lobby {
+            width: 100%;
+            padding: 0.65rem;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        /* 소리 켜기/끄기 플로팅 버튼 */
+        .sound-toggle-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(20, 24, 36, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: var(--font-eng);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="arcade-wrapper">
+
+        <!-- 캔버스 (900 x 520 해상도 고정, CSS로 16:9 반응형 자동 확장) -->
+        <canvas id="gameCanvas" width="900" height="520"></canvas>
+
+        <!-- 사운드 토글 버튼 -->
+        <button id="soundToggle" class="sound-toggle-btn">
+            <span id="soundIcon">🔊</span> SOUND ON
+        </button>
+
+        <!-- 1. 메인 로비 & 캐릭터 선택 오버레이 -->
+        <div id="lobbyOverlay" class="game-overlay">
+            <div class="subway-station-sign">
+                <span class="station-num">2</span>
+                <span class="station-name">2호선 신도림역 ➔ 테헤란로 사옥</span>
+            </div>
+
+            <h1 class="game-main-title">지옥철 출근런 : 8시 59분</h1>
+            <p class="game-sub-title">현재 시각 8시 52분! 개찰구와 인파를 뚫고 8시 59분까지 지문 태그를 찍어라!</p>
+
+            <div class="char-select-wrap">
+                <div class="char-select-header">
+                    <span>SELECT YOUR RUNNER (15 MEMBERS)</span>
+                    <span style="color:#94a3b8;">원하는 멤버를 선택하세요</span>
+                </div>
+
+                <!-- 15명 멤버 캐릭터 캐러셀 -->
+                <div id="charScrollBox" class="char-scroll-box"></div>
+
+                <!-- 선택된 캐릭터 특성 표시 -->
+                <div class="char-status-bar">
+                    <span id="charSelectedName" style="font-weight:800; font-size:0.9rem;">Lucy (루시)</span>
+                    <span id="charSelectedSkill" class="char-status-skill">⚡ [광란의 질주] 부스터 충전 속도 +30%</span>
+                </div>
+            </div>
+
+            <button id="btnStartGame" class="btn-launch">
+                <span>사원증 챙기고 출근하기</span>
+                <span>▶</span>
+            </button>
+
+            <div class="control-guide-bar">
+                <div class="guide-item">
+                    <span class="key-badge">SPACE / ↑</span>
+                    <span>점프 & 2단 점프</span>
+                </div>
+                <div class="guide-item">
+                    <span class="key-badge">↓</span>
+                    <span>슬라이딩 (개찰구/장애물 통과)</span>
+                </div>
+                <div class="guide-item">
+                    <span class="key-badge">MOBILE</span>
+                    <span>화면 좌/우 터치 버튼 지원</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 모바일 전용 온스크린 조작 버튼 (게임 중 상시 표시) -->
+        <div class="touch-action-panel">
+            <button id="touchSlide" class="touch-action-btn slide-btn" aria-label="슬라이딩">
+                <span style="font-size:1.2rem;">▼</span>
+                <span>SLIDE</span>
+            </button>
+            <button id="touchJump" class="touch-action-btn" aria-label="점프">
+                <span style="font-size:1.2rem;">▲</span>
+                <span>JUMP</span>
+            </button>
+        </div>
+
+        <!-- 3. 결과 오버레이 (클리어 / 지각) -->
+        <div id="resultOverlay" class="game-overlay hidden">
+            <div class="result-card">
+                <div id="resStamp" class="result-stamp safe">SAFE!</div>
+                <h2 id="resTitle" class="result-title">8시 59분 58초 세이프!</h2>
+                <p id="resDesc" class="result-desc">닫히는 엘리베이터 문틈으로 손을 찔러 넣어 당당히 정시 출근 완료!</p>
+
+                <div class="result-stats-row">
+                    <div class="stat-cell">
+                        <div class="stat-cell-label">도착 시간</div>
+                        <div id="statTime" class="stat-cell-val" style="color:var(--neon-lime);">08:59:58</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-cell-label">최종 스코어</div>
+                        <div id="statScore" class="stat-cell-val">12,450</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-cell-label">마신 커피</div>
+                        <div id="statCoffee" class="stat-cell-val" style="color:var(--coffee-blue);">5잔</div>
+                    </div>
+                </div>
+
+                <button id="btnPlayAgain" class="btn-again">다시 질주하기 ↺</button>
+                <button id="btnBackLobby" class="btn-lobby">멤버 다시 선택하기</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ========================================================
+         * 15명 멤버 데이터 및 고유 런너 스킬 정의
+         * ======================================================== */
+        const MEMBERS = [
+            { id: 'Lucy', name: 'Lucy', title: '루시', skill: '⚡ [AI 가속] 부스터 게이지 충전 속도 +35%', img: './assets/members/Lucy.png', boosterMult: 1.35, jumpPower: 1.0, speedMult: 1.05 },
+            { id: 'Abby', name: 'Abby', title: '애비', skill: '🏃 [환승의 신] 기본 이동속도 +15%', img: './assets/members/Abby.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.15 },
+            { id: 'Bella', name: 'Bella', title: '벨라', skill: '💖 [긍정 방패] 장애물 피격 시 감속 50% 방어', img: './assets/members/Bella.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, recoverFast: true },
+            { id: 'Billy', name: 'Billy', title: '빌리', skill: '🚀 [하이점프] 점프 높이 +20% & 체공 시간 증가', img: './assets/members/Billy.png', boosterMult: 1.0, jumpPower: 1.20, speedMult: 1.0 },
+            { id: 'Boda', name: 'Boda', title: '보다', skill: '👁️ [위험 감지] 장애물에 네온 가이드라인 표시', img: './assets/members/Boda.png', boosterMult: 1.0, jumpPower: 1.05, speedMult: 1.0, seeAhead: true },
+            { id: 'Danny', name: 'Danny', title: '대니', skill: '🛡️ [불도저] 1회 충돌 무효화 보호막 장착', img: './assets/members/Danny.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, startShield: 1 },
+            { id: 'Eden', name: 'Eden', title: '이든', skill: '🔕 [슬랙 면역] 슬랙 팝업 방해요소 100% 무시', img: './assets/members/Eden.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, antiSlack: true },
+            { id: 'Hewon', name: 'Hewon', title: '혜원', skill: '🔥 [피버 폭주] 부스터 지속시간 +2초 (총 7초)', img: './assets/members/Hewon.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, feverDuration: 7 },
+            { id: 'Julie', name: 'Julie', title: '줄리', skill: '💳 [법카 골드] 커피 & 사원증 점수 2배 획득', img: './assets/members/Julie.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, scoreMult: 2.0 },
+            { id: 'Kate', name: 'Kate', title: '케이트', skill: '🕊️ [평화로운 출근길] 슬라이딩 판정 지속시간 1.5배', img: './assets/members/Kate.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, slideBonus: 1.5 },
+            { id: 'Kwazii', name: 'Kwazii', title: '콰지', skill: '🐆 [치타 대시] 3단 점프(Triple Jump) 가능!', img: './assets/members/Kwazii.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.1, maxJumps: 3 },
+            { id: 'Mark', name: 'Mark', title: '마크', skill: '⏰ [정시의 마법사] 8시 59분 도착 시 랭크 SS 보너스', img: './assets/members/Mark.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, safeBonus: 5000 },
+            { id: 'Norah', name: 'Norah', title: '노라', skill: '🎧 [노캔 몰입] 배경음 템포 상승 & 조작 반응속도 극대화', img: './assets/members/Norah.png', boosterMult: 1.15, jumpPower: 1.05, speedMult: 1.05 },
+            { id: 'Peace', name: 'Peace', title: '피스', skill: '🌿 [마음의 릴렉스] 5초간 연속 회피 시 자동 대시', img: './assets/members/Peace.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, dodgeRush: true },
+            { id: 'Rachel', name: 'Rachel', title: '레이첼', skill: '💡 [최단 환승] 커피 2개만 먹어도 부스터 즉시 발동', img: './assets/members/Rachel.png', boosterMult: 1.0, jumpPower: 1.0, speedMult: 1.0, boosterCoffeeReq: 2 }
+        ];
+
+        let selectedMember = MEMBERS[0];
+
+        /* ========================================================
+         * 8비트 아케이드 Web Audio 사운드 엔진 (SFX & 칩튠 BGM)
+         * ======================================================== */
+        class RetroAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.bgmTimer = null;
+                this.bgmStep = 0;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleSound() {
+                this.muted = !this.muted;
+                const icon = document.getElementById('soundIcon');
+                const btn = document.getElementById('soundToggle');
+                if (this.muted) {
+                    icon.textContent = '🔇';
+                    btn.innerHTML = `<span>🔇</span> SOUND OFF`;
+                    this.stopBGM();
+                } else {
+                    icon.textContent = '🔊';
+                    btn.innerHTML = `<span>🔊</span> SOUND ON`;
+                    this.init();
+                    this.startBGM();
+                }
+            }
+
+            playTone(freq, type, duration, vol = 0.2) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            jump() {
+                this.init();
+                this.playTone(320, 'square', 0.12, 0.18);
+                setTimeout(() => this.playTone(580, 'square', 0.14, 0.2), 35);
+            }
+
+            doubleJump() {
+                this.init();
+                this.playTone(550, 'triangle', 0.08, 0.22);
+                setTimeout(() => this.playTone(880, 'triangle', 0.16, 0.25), 40);
+            }
+
+            slide() {
+                this.init();
+                // 촤아아악 마찰 소음
+                this.playTone(200, 'sawtooth', 0.06, 0.15);
+                setTimeout(() => this.playTone(140, 'sawtooth', 0.08, 0.12), 40);
+            }
+
+            coffee() {
+                this.init();
+                [523, 659, 784, 1046].forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'sine', 0.08, 0.18), i * 45);
+                });
+            }
+
+            hit() {
+                this.init();
+                this.playTone(160, 'sawtooth', 0.25, 0.35);
+                setTimeout(() => this.playTone(90, 'sawtooth', 0.3, 0.4), 60);
+            }
+
+            booster() {
+                this.init();
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => this.playTone(300 + i * 120, 'triangle', 0.1, 0.2), i * 35);
+                }
+            }
+
+            safe() {
+                this.init();
+                const melody = [523, 659, 784, 1046, 1318];
+                melody.forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'square', 0.25, 0.25), i * 90);
+                });
+            }
+
+            late() {
+                this.init();
+                [350, 310, 270, 220].forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'sawtooth', 0.3, 0.3), i * 120);
+                });
+            }
+
+            // 흥겨운 8비트 베이스라인 BGM
+            startBGM() {
+                if (this.muted) return;
+                this.stopBGM();
+                const bassNotes = [130.81, 130.81, 164.81, 196.00, 146.83, 146.83, 174.61, 220.00];
+                this.bgmTimer = setInterval(() => {
+                    if (this.muted || !this.ctx) return;
+                    const freq = bassNotes[this.bgmStep % bassNotes.length];
+                    this.playTone(freq, 'triangle', 0.18, 0.08);
+                    this.bgmStep++;
+                }, 220);
+            }
+
+            stopBGM() {
+                if (this.bgmTimer) {
+                    clearInterval(this.bgmTimer);
+                    this.bgmTimer = null;
+                }
+            }
+        }
+        const audio = new RetroAudioEngine();
+        document.getElementById('soundToggle').addEventListener('click', () => audio.toggleSound());
+
+        /* ========================================================
+         * 캔버스 & 렌더링 컨텍스트
+         * ======================================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 멤버 이미지 사전 로드
+        const memberImgs = {};
+        MEMBERS.forEach(m => {
+            const img = new Image();
+            img.src = m.img;
+            memberImgs[m.id] = img;
+        });
+
+        /* ========================================================
+         * 게임 메인 변수 & 상태
+         * ======================================================== */
+        let gameState = 'LOBBY'; // LOBBY, PLAYING, GAMEOVER, CLEAR
+        let distance = 0; // 0m ~ 1000m (목표: 1000m 도착 시 8시 59분 세이프!)
+        const GOAL_DISTANCE = 1000;
+        let gameSpeed = 7.5;
+        let baseSpeed = 7.5;
+        let score = 0;
+        let coffeeCount = 0;
+        let totalCoffeeCollected = 0;
+        let boosterTimer = 0;
+        let cameraShake = 0;
+
+        // 시간 계산 (8:52:00 ~ 9:00:00) 총 480초를 60초 러닝 타임으로 압축
+        let elapsedTime = 0;
+        const TARGET_SECONDS = 60; // 60초 동안 1000m를 달리면 세이프
+
+        /* ========================================================
+         * 런너 캐릭터 오브젝트 (얼굴 실사 + 카툰 정장 바디)
+         * ======================================================== */
+        const runner = {
+            x: 140,
+            y: 360,
+            groundY: 360,
+            vy: 0,
+            gravity: 0.85,
+            jumpStrength: -16.5,
+            isGrounded: true,
+            jumpsLeft: 2,
+            maxJumps: 2,
+            isSliding: false,
+            slideTimer: 0,
+            width: 50,
+            height: 90,
+            runAnimPhase: 0,
+            shieldCount: 0,
+            invincibleTimer: 0
+        };
+
+        // 장애물 및 아이템 배열
+        let obstacles = [];
+        let pickups = [];
+        let particles = [];
+        let floatingNotices = [];
+
+        /* ========================================================
+         * 로비 세팅 및 캐릭터 선택
+         * ======================================================== */
+        const charScrollBox = document.getElementById('charScrollBox');
+        const charSelectedName = document.getElementById('charSelectedName');
+        const charSelectedSkill = document.getElementById('charSelectedSkill');
+        const lobbyOverlay = document.getElementById('lobbyOverlay');
+        const resultOverlay = document.getElementById('resultOverlay');
+
+        function initLobby() {
+            charScrollBox.innerHTML = '';
+            MEMBERS.forEach(m => {
+                const btn = document.createElement('div');
+                btn.className = `char-thumb-btn ${m.id === selectedMember.id ? 'active' : ''}`;
+                btn.innerHTML = `
+                    <div class="char-thumb-img">
+                        <img src="${m.img}" alt="${m.name}">
+                    </div>
+                    <div class="char-thumb-name">${m.name}</div>
+                `;
+                btn.addEventListener('click', () => {
+                    selectedMember = m;
+                    updateLobbySelection();
+                    audio.jump();
+                });
+                charScrollBox.appendChild(btn);
+            });
+        }
+
+        function updateLobbySelection() {
+            const btns = charScrollBox.querySelectorAll('.char-thumb-btn');
+            btns.forEach((b, idx) => {
+                if (MEMBERS[idx].id === selectedMember.id) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            charSelectedName.textContent = `${selectedMember.name} (${selectedMember.title})`;
+            charSelectedSkill.textContent = selectedMember.skill;
+        }
+
+        initLobby();
+
+        document.getElementById('btnStartGame').addEventListener('click', () => {
+            audio.init();
+            audio.startBGM();
+            startGame();
+        });
+
+        document.getElementById('btnPlayAgain').addEventListener('click', () => {
+            startGame();
+        });
+
+        document.getElementById('btnBackLobby').addEventListener('click', () => {
+            resultOverlay.classList.add('hidden');
+            lobbyOverlay.classList.remove('hidden');
+            gameState = 'LOBBY';
+        });
+
+        /* ========================================================
+         * 조작 컨트롤 (PC 키보드 & 모바일 터치)
+         * ======================================================== */
+        function triggerJump() {
+            if (gameState !== 'PLAYING') return;
+
+            if (runner.jumpsLeft > 0) {
+                if (runner.jumpsLeft === runner.maxJumps) {
+                    // 1단 점프
+                    runner.vy = runner.jumpStrength * (selectedMember.jumpPower || 1.0);
+                    runner.isGrounded = false;
+                    runner.jumpsLeft--;
+                    audio.jump();
+                    createDust(runner.x, runner.groundY + 45, 6);
+                } else {
+                    // 2단/3단 점프
+                    runner.vy = runner.jumpStrength * 0.9 * (selectedMember.jumpPower || 1.0);
+                    runner.jumpsLeft--;
+                    audio.doubleJump();
+                    createSparkles(runner.x, runner.y + 40, '#00ff66', 8);
+                }
+                runner.isSliding = false;
+            }
+        }
+
+        function triggerSlideStart() {
+            if (gameState !== 'PLAYING') return;
+            if (runner.isGrounded) {
+                runner.isSliding = true;
+                runner.slideTimer = 0.45 * (selectedMember.slideBonus || 1.0);
+                audio.slide();
+                createDust(runner.x - 10, runner.groundY + 40, 8);
+            }
+        }
+
+        function triggerSlideEnd() {
+            runner.isSliding = false;
+        }
+
+        // 키보드 리스너
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                e.preventDefault();
+                triggerJump();
+            } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                e.preventDefault();
+                triggerSlideStart();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                triggerSlideEnd();
+            }
+        });
+
+        // 모바일 터치 버튼
+        const touchJumpBtn = document.getElementById('touchJump');
+        const touchSlideBtn = document.getElementById('touchSlide');
+
+        touchJumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
+        touchSlideBtn.addEventListener('touchstart', (e) => { e.preventDefault(); triggerSlideStart(); });
+        touchSlideBtn.addEventListener('touchend', (e) => { e.preventDefault(); triggerSlideEnd(); });
+
+        touchJumpBtn.addEventListener('mousedown', (e) => { e.preventDefault(); triggerJump(); });
+        touchSlideBtn.addEventListener('mousedown', (e) => { e.preventDefault(); triggerSlideStart(); });
+        touchSlideBtn.addEventListener('mouseup', (e) => { e.preventDefault(); triggerSlideEnd(); });
+
+        // 화면 탭 조작 (화면 왼쪽=슬라이드, 오른쪽=점프)
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const relX = touch.clientX - rect.left;
+            if (relX < rect.width * 0.45) {
+                triggerSlideStart();
+            } else {
+                triggerJump();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            triggerSlideEnd();
+        });
+
+        /* ========================================================
+         * 게임 초기화 & 시작
+         * ======================================================== */
+        function startGame() {
+            lobbyOverlay.classList.add('hidden');
+            resultOverlay.classList.add('hidden');
+            gameState = 'PLAYING';
+
+            distance = 0;
+            score = 0;
+            coffeeCount = 0;
+            totalCoffeeCollected = 0;
+            elapsedTime = 0;
+            boosterTimer = 0;
+            cameraShake = 0;
+
+            baseSpeed = 7.5 * (selectedMember.speedMult || 1.0);
+            gameSpeed = baseSpeed;
+
+            runner.y = runner.groundY;
+            runner.vy = 0;
+            runner.isGrounded = true;
+            runner.maxJumps = selectedMember.maxJumps || 2;
+            runner.jumpsLeft = runner.maxJumps;
+            runner.isSliding = false;
+            runner.shieldCount = selectedMember.startShield || 0;
+            runner.invincibleTimer = 0;
+
+            obstacles = [];
+            pickups = [];
+            particles = [];
+            floatingNotices = [];
+
+            nextObstacleDist = 80;
+            nextPickupDist = 40;
+
+            lastTime = performance.now();
+        }
+
+        /* ========================================================
+         * 장애물 & 아이템 생성 스케줄러
+         * ======================================================== */
+        let nextObstacleDist = 80;
+        let nextPickupDist = 40;
+
+        function updateSpawns() {
+            // 장애물 스폰
+            if (distance >= nextObstacleDist && distance < GOAL_DISTANCE - 40) {
+                spawnObstacle();
+                // 달릴수록 장애물 간격이 좁아지며 긴장감 상승
+                const minGap = Math.max(55, 95 - (distance / GOAL_DISTANCE) * 35);
+                nextObstacleDist = distance + minGap + Math.random() * 45;
+            }
+
+            // 아이템 스폰
+            if (distance >= nextPickupDist && distance < GOAL_DISTANCE - 30) {
+                spawnPickup();
+                nextPickupDist = distance + 35 + Math.random() * 40;
+            }
+        }
+
+        function spawnObstacle() {
+            // 현재 스테이지 결정 (0~350m: 지하철, 350~750m: 거리, 750~1000m: 사옥)
+            let types = [];
+            if (distance < 350) {
+                // 1. 지하철역: 캐리어(점프), 닫히는 개찰구(슬라이드), 깜빡이는 스크린도어(점프)
+                types = [
+                    { id: 'gate', kind: 'slide', label: '🛑 닫히는 개찰구', width: 45, height: 60, yOffset: -85, color: '#ff2a5f' },
+                    { id: 'carrier', kind: 'jump', label: '🧳 대형 캐리어', width: 44, height: 42, yOffset: -42, color: '#f59e0b' },
+                    { id: 'fence', kind: 'jump', label: '🚧 점검중 펜스', width: 46, height: 48, yOffset: -48, color: '#eab308' }
+                ];
+            } else if (distance < 750) {
+                // 2. 테헤란로 거리: 킥보드(점프), 안전 배너(슬라이드), 슬랙 팝업(슬라이드/점프)
+                types = [
+                    { id: 'kickboard', kind: 'jump', label: '🛴 폭주 킥보드', width: 50, height: 38, yOffset: -38, color: '#06b6d4' },
+                    { id: 'banner', kind: 'slide', label: '⚠️ 공사중 현수막', width: 55, height: 65, yOffset: -90, color: '#f97316' },
+                    { id: 'slack', kind: 'slack', label: '💬 "어디쯤 오세요?"', width: 75, height: 40, yOffset: -65, color: '#ec4899' }
+                ];
+            } else {
+                // 3. 사옥 로비: 택배 짐수레(슬라이드), 청소 카트(점프), 닫히는 엘리베이터 문(슬라이드)
+                types = [
+                    { id: 'cart', kind: 'jump', label: '🧹 청소 카트', width: 48, height: 46, yOffset: -46, color: '#a855f7' },
+                    { id: 'pallet', kind: 'slide', label: '📦 높은 짐수레', width: 55, height: 65, yOffset: -95, color: '#64748b' }
+                ];
+            }
+
+            const chosen = types[Math.floor(Math.random() * types.length)];
+            obstacles.push({
+                ...chosen,
+                x: canvas.width + 40,
+                y: runner.groundY + 45 + chosen.yOffset
+            });
+        }
+
+        function spawnPickup() {
+            const roll = Math.random();
+            let item;
+            if (roll < 0.65) {
+                // 커피 (65%)
+                item = { id: 'coffee', label: '🧊', name: '아아', color: '#00e5ff', y: runner.groundY - 10 - Math.random() * 60 };
+            } else if (roll < 0.88) {
+                // 사원증 (23%)
+                item = { id: 'badge', label: '🪪', name: '사원증', color: '#00ff66', y: runner.groundY - 20 - Math.random() * 50 };
+            } else {
+                // 부스터 토스트 (12%)
+                item = { id: 'toast', label: '🥪', name: '토스트', color: '#fbbf24', y: runner.groundY - 20 };
+            }
+
+            pickups.push({
+                ...item,
+                x: canvas.width + 30,
+                size: 32
+            });
+        }
+
+        /* ========================================================
+         * 파티클 & 플로팅 텍스트 이펙트
+         * ======================================================== */
+        function createDust(x, y, count = 6) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x, y,
+                    vx: -(gameSpeed * 0.4) - Math.random() * 2,
+                    vy: -Math.random() * 2,
+                    size: 3 + Math.random() * 4,
+                    color: 'rgba(200, 210, 230, 0.5)',
+                    life: 1.0,
+                    decay: 0.05
+                });
+            }
+        }
+
+        function createSparkles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const spd = 2 + Math.random() * 4;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd,
+                    size: 3 + Math.random() * 3,
+                    color,
+                    life: 1.0,
+                    decay: 0.04
+                });
+            }
+        }
+
+        function showNotice(text, color = '#00ff66') {
+            floatingNotices.push({
+                text,
+                color,
+                x: runner.x + 30,
+                y: runner.y - 30,
+                vy: -1.6,
+                life: 1.0
+            });
+        }
+
+        /* ========================================================
+         * 게임 메인 루프 (Update & Render)
+         * ======================================================== */
+        let lastTime = performance.now();
+
+        function gameLoop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            if (gameState === 'PLAYING') {
+                update(dt);
+            }
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+        requestAnimationFrame(gameLoop);
+
+        function update(dt) {
+            elapsedTime += dt;
+
+            // 시간 초과 체크 (60초 경과 시 9:00:00 지각!)
+            if (elapsedTime >= TARGET_SECONDS && distance < GOAL_DISTANCE) {
+                gameLate();
+                return;
+            }
+
+            // 목표 1000m 도착 체크 (8시 59분 세이프 클리어!)
+            if (distance >= GOAL_DISTANCE) {
+                gameSafe();
+                return;
+            }
+
+            // 카메라 셰이크 감쇠
+            if (cameraShake > 0) cameraShake = Math.max(0, cameraShake - dt * 20);
+
+            // 부스터 타이머
+            const isFever = boosterTimer > 0;
+            if (isFever) {
+                boosterTimer = Math.max(0, boosterTimer - dt);
+                gameSpeed = baseSpeed * 1.5;
+            } else {
+                gameSpeed = baseSpeed + (distance / GOAL_DISTANCE) * 2.5;
+            }
+
+            // 거리 및 점수 증가
+            distance += (gameSpeed * dt * 3.5);
+            score += Math.round(gameSpeed * dt * 20 * (selectedMember.scoreMult || 1.0));
+
+            // 스폰 스케줄
+            updateSpawns();
+
+            // 런너 점프 & 물리
+            if (!runner.isGrounded) {
+                runner.vy += runner.gravity;
+                runner.y += runner.vy;
+
+                if (runner.y >= runner.groundY) {
+                    runner.y = runner.groundY;
+                    runner.vy = 0;
+                    runner.isGrounded = true;
+                    runner.jumpsLeft = runner.maxJumps;
+                    createDust(runner.x, runner.groundY + 45, 5);
+                }
+            }
+
+            // 슬라이딩 타이머
+            if (runner.isSliding) {
+                runner.slideTimer -= dt;
+                createDust(runner.x - 5, runner.groundY + 45, 2);
+                if (runner.slideTimer <= 0) {
+                    runner.isSliding = false;
+                }
+            }
+
+            // 무적 타이머
+            if (runner.invincibleTimer > 0) {
+                runner.invincibleTimer = Math.max(0, runner.invincibleTimer - dt);
+            }
+
+            // 달리기 애니메이션 위상
+            runner.runAnimPhase += dt * gameSpeed * 2.2;
+
+            // 장애물 이동 & 충돌 판정
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.x -= gameSpeed * 60 * dt;
+
+                // 충돌 검사
+                if (checkCollision(obs)) {
+                    handleObstacleHit(obs);
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                // 화면 밖 제거
+                if (obs.x < -100) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // 아이템 이동 & 획득 판정
+            for (let i = pickups.length - 1; i >= 0; i--) {
+                const pk = pickups[i];
+                pk.x -= gameSpeed * 60 * dt;
+
+                // 획득 검사
+                const dx = (pk.x + 16) - (runner.x + 25);
+                const dy = (pk.y + 16) - (runner.y + 40);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 45) {
+                    handlePickupCollect(pk);
+                    pickups.splice(i, 1);
+                    continue;
+                }
+
+                if (pk.x < -50) {
+                    pickups.splice(i, 1);
+                }
+            }
+
+            // 파티클 업데이트
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // 공지 텍스트 업데이트
+            for (let i = floatingNotices.length - 1; i >= 0; i--) {
+                const fn = floatingNotices[i];
+                fn.y += fn.vy;
+                fn.life -= 0.025;
+                if (fn.life <= 0) floatingNotices.splice(i, 1);
+            }
+        }
+
+        /* ========================================================
+         * 충돌 검사 로직
+         * ======================================================== */
+        function checkCollision(obs) {
+            // 러너 히트박스 (슬라이딩 시 높이 축소)
+            const rx = runner.x + 8;
+            const rw = runner.width - 16;
+            const ry = runner.isSliding ? runner.y + 45 : runner.y + 10;
+            const rh = runner.isSliding ? 40 : runner.height - 10;
+
+            const ox = obs.x;
+            const ow = obs.width;
+            const oy = obs.y;
+            const oh = obs.height;
+
+            return (rx < ox + ow && rx + rw > ox && ry < oy + oh && ry + rh > oy);
+        }
+
+        function handleObstacleHit(obs) {
+            // 부스터 무적 상태일 때: 장애물 파괴!
+            if (boosterTimer > 0) {
+                createSparkles(obs.x + 20, obs.y + 20, '#00ff66', 15);
+                showNotice('💥 장애물 돌파! (+300)', '#00ff66');
+                score += 300;
+                audio.jump();
+                return;
+            }
+
+            // 쉴드 보호막이 있을 때: 1회 방어
+            if (runner.shieldCount > 0) {
+                runner.shieldCount--;
+                runner.invincibleTimer = 1.2;
+                createSparkles(runner.x + 25, runner.y + 40, '#00e5ff', 16);
+                showNotice('🛡️ 쉴드 방어 성공!', '#00e5ff');
+                audio.jump();
+                return;
+            }
+
+            // 이미 무적 깜빡임 중일 때
+            if (runner.invincibleTimer > 0) return;
+
+            // 충돌 피격!
+            cameraShake = 0.35;
+            runner.invincibleTimer = 1.5;
+            audio.hit();
+
+            // 감속 페널티 (시간 소모)
+            const penalty = selectedMember.recoverFast ? 1.5 : 2.8;
+            elapsedTime += penalty;
+            createDust(runner.x, runner.y + 40, 12);
+            showNotice(`⚠️ 충돌! 지각 위기 (+${penalty.toFixed(1)}초)`, '#ff2a5f');
+        }
+
+        function handlePickupCollect(pk) {
+            if (pk.id === 'coffee') {
+                coffeeCount++;
+                totalCoffeeCollected++;
+                score += Math.round(150 * (selectedMember.scoreMult || 1.0));
+                audio.coffee();
+                createSparkles(pk.x, pk.y, '#00e5ff', 12);
+                showNotice('🧊 아아 섭취! (+150)', '#00e5ff');
+
+                // 부스터 체크 (Rachel은 2개, 기본은 3개)
+                const req = selectedMember.boosterCoffeeReq || 3;
+                if (coffeeCount >= req) {
+                    coffeeCount = 0;
+                    const dur = selectedMember.feverDuration || 5;
+                    boosterTimer = dur;
+                    cameraShake = 0.2;
+                    audio.booster();
+                    showNotice('🔥 광란의 카페인 질주 모드! 🔥', '#00ff66');
+                }
+            } else if (pk.id === 'badge') {
+                score += Math.round(400 * (selectedMember.scoreMult || 1.0));
+                audio.jump();
+                createSparkles(pk.x, pk.y, '#00ff66', 14);
+                showNotice('🪪 사원증 획득! (+400)', '#00ff66');
+            } else if (pk.id === 'toast') {
+                elapsedTime = Math.max(0, elapsedTime - 2.0); // 시간 회복!
+                score += 200;
+                audio.coffee();
+                createSparkles(pk.x, pk.y, '#fbbf24', 12);
+                showNotice('🥪 든든한 토스트! (-2초 단축)', '#fbbf24');
+            }
+        }
+
+        /* ========================================================
+         * 게임 클리어 (세이프!) & 지각 (오버)
+         * ======================================================== */
+        function gameSafe() {
+            gameState = 'CLEAR';
+            audio.stopBGM();
+            audio.safe();
+
+            const secLeft = Math.max(0, TARGET_SECONDS - elapsedTime);
+            const arriveSec = Math.floor(59 - secLeft * 0.15);
+            const timeStr = `08:59:${String(Math.max(50, arriveSec)).padStart(2, '0')}`;
+
+            document.getElementById('resStamp').className = 'result-stamp safe';
+            document.getElementById('resStamp').textContent = 'SAFE!';
+            document.getElementById('resTitle').textContent = `🎉 8시 59분 세이프 출근 성공!`;
+            document.getElementById('resDesc').textContent = `${selectedMember.name} 님은 닫히려는 엘리베이터 틈 사이로 뛰어들어 지각을 완벽하게 면했습니다!`;
+
+            if (selectedMember.safeBonus) score += selectedMember.safeBonus;
+
+            document.getElementById('statTime').textContent = timeStr;
+            document.getElementById('statScore').textContent = score.toLocaleString();
+            document.getElementById('statCoffee').textContent = `${totalCoffeeCollected}잔`;
+
+            resultOverlay.classList.remove('hidden');
+        }
+
+        function gameLate() {
+            gameState = 'GAMEOVER';
+            audio.stopBGM();
+            audio.late();
+
+            document.getElementById('resStamp').className = 'result-stamp late';
+            document.getElementById('resStamp').textContent = '09:00 LATE';
+            document.getElementById('resTitle').textContent = `💀 9시 정각... 지각 확정!`;
+            document.getElementById('resDesc').textContent = `눈앞에서 엘리베이터 문이 닫혀버렸습니다... 살금살금 뒷문으로 기어들어가야 합니다.`;
+
+            document.getElementById('statTime').textContent = '09:00:15';
+            document.getElementById('statScore').textContent = score.toLocaleString();
+            document.getElementById('statCoffee').textContent = `${totalCoffeeCollected}잔`;
+
+            resultOverlay.classList.remove('hidden');
+        }
+
+        /* ========================================================
+         * 렌더링 파이프라인
+         * ======================================================== */
+        function render() {
+            ctx.save();
+
+            // 카메라 흔들림 (충돌/부스터 시)
+            if (cameraShake > 0) {
+                const sx = (Math.random() - 0.5) * cameraShake * 22;
+                const sy = (Math.random() - 0.5) * cameraShake * 22;
+                ctx.translate(sx, sy);
+            }
+
+            // 1. 다중 패럴랙스 배경 그리기
+            renderBackground();
+
+            // 2. 바닥 트랙 그리기
+            renderGround();
+
+            // 3. 아이템 렌더링
+            renderPickups();
+
+            // 4. 장애물 렌더링
+            renderObstacles();
+
+            // 5. 런너 캐릭터 렌더링 (얼굴 실사 누끼 + 카툰 정장 바디)
+            renderRunner();
+
+            // 6. 파티클 렌더링
+            renderParticles();
+
+            // 7. 부스터 속도선(Speed Lines) 이펙트
+            if (boosterTimer > 0) {
+                renderSpeedLines();
+            }
+
+            // 8. 플로팅 알림 텍스트
+            renderNotices();
+
+            // 9. 헤드업 디스플레이 (HUD)
+            if (gameState === 'PLAYING') {
+                renderHUD();
+            }
+
+            ctx.restore();
+        }
+
+        /* ========================================================
+         * 배경 렌더링 (다중 패럴랙스 레이어: 빌딩숲 ➔ 전철역 ➔ 거리 ➔ 사옥)
+         * ======================================================== */
+        function renderBackground() {
+            // 하늘 그라데이션 (아침 여명)
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrad.addColorStop(0, '#0a0d16');
+            skyGrad.addColorStop(0.65, '#161c2d');
+            skyGrad.addColorStop(1, '#28344d');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 레이어 1: 원경 테헤란로 고층 빌딩 실루엣 (느린 스크롤)
+            ctx.fillStyle = '#0f1422';
+            const bOffset1 = -(distance * 0.15) % 180;
+            for (let x = bOffset1 - 180; x < canvas.width + 180; x += 90) {
+                const h = 180 + Math.sin(x * 0.05) * 60;
+                ctx.fillRect(x, canvas.height - 120 - h, 75, h);
+                // 빌딩 창문 불빛
+                ctx.fillStyle = 'rgba(255, 230, 120, 0.15)';
+                for (let wx = x + 10; wx < x + 65; wx += 16) {
+                    for (let wy = canvas.height - 110 - h; wy < canvas.height - 130; wy += 22) {
+                        if (Math.sin(wx + wy) > 0.1) ctx.fillRect(wx, wy, 8, 12);
+                    }
+                }
+                ctx.fillStyle = '#0f1422';
+            }
+
+            // 레이어 2: 스테이지별 랜드마크 장식
+            if (distance < 350) {
+                // 2호선 전철역 플랫폼 타일 벽 & 초록 띠
+                ctx.fillStyle = '#182030';
+                ctx.fillRect(0, canvas.height - 170, canvas.width, 60);
+
+                ctx.fillStyle = 'var(--subway-green)';
+                ctx.fillRect(0, canvas.height - 150, canvas.width, 14);
+
+                // 스크린도어 기둥들
+                const pOffset = -(distance * 0.6) % 220;
+                ctx.fillStyle = '#222d42';
+                for (let x = pOffset - 220; x < canvas.width + 220; x += 220) {
+                    ctx.fillRect(x, canvas.height - 210, 24, 100);
+                    // 안전문 전광판
+                    ctx.fillStyle = '#00ff66';
+                    ctx.font = 'bold 9px var(--font-eng)';
+                    ctx.fillText('DOOR CLOSING', x - 25, canvas.height - 185);
+                    ctx.fillStyle = '#222d42';
+                }
+            } else if (distance < 750) {
+                // 거리 가로등 및 신호등
+                const lightOffset = -(distance * 0.7) % 260;
+                for (let x = lightOffset - 260; x < canvas.width + 260; x += 260) {
+                    ctx.fillStyle = '#334155';
+                    ctx.fillRect(x, canvas.height - 230, 8, 120);
+                    // 신호등 초록불 깜빡임
+                    ctx.fillStyle = (Math.floor(elapsedTime * 4) % 2 === 0) ? '#00ff66' : '#1e293b';
+                    ctx.beginPath();
+                    ctx.arc(x + 4, canvas.height - 220, 9, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else {
+                // 회사 로비 유리창 & 엘리베이터 게이트
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, canvas.height - 260, canvas.width, 150);
+
+                // 엘리베이터 층수 표시 (23F)
+                ctx.font = 'bold 16px var(--font-eng)';
+                ctx.fillStyle = '#ff2a5f';
+                ctx.fillText('▲ 23F REALWORK TOWER', 350, canvas.height - 220);
+            }
+        }
+
+        /* ========================================================
+         * 바닥 트랙 렌더링
+         * ======================================================== */
+        function renderGround() {
+            const groundY = runner.groundY + 45;
+
+            // 바닥 아스팔트/타일
+            ctx.fillStyle = '#121622';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+            // 상단 야광 라인 (네온 그린 띠)
+            ctx.fillStyle = 'var(--subway-green)';
+            ctx.fillRect(0, groundY, canvas.width, 4);
+
+            // 노란 점자 블록 / 횡단보도 패턴 (빠른 패럴랙스)
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+            const tileOffset = -(distance * 1.5) % 40;
+            for (let x = tileOffset - 40; x < canvas.width + 40; x += 40) {
+                ctx.fillRect(x, groundY + 10, 22, 6);
+            }
+        }
+
+        /* ========================================================
+         * 런너 캐릭터 렌더링 (얼굴 실사 누끼 + 카툰 직장인 스프라이트)
+         * ======================================================== */
+        function renderRunner() {
+            ctx.save();
+
+            // 부스터 시 잔상 이펙트
+            if (boosterTimer > 0) {
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = '#00ff66';
+                drawBody(runner.x - 35, runner.y, true);
+                drawBody(runner.x - 20, runner.y, true);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // 피격 무적 깜빡임
+            if (runner.invincibleTimer > 0 && Math.floor(elapsedTime * 15) % 2 === 0) {
+                ctx.globalAlpha = 0.4;
+            }
+
+            drawBody(runner.x, runner.y, false);
+
+            ctx.restore();
+        }
+
+        function drawBody(x, y, isGhost) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const isSliding = runner.isSliding;
+            const phase = runner.runAnimPhase;
+            const legSwing = Math.sin(phase) * 16;
+            const armSwing = Math.cos(phase) * 14;
+
+            if (isSliding) {
+                // ==========================
+                // 1. 슬라이딩 모션 (바닥에 엎드려 촤아악 미끄러짐)
+                // ==========================
+                ctx.rotate(-0.25);
+
+                // 다리 (바닥으로 쭉 뻗음)
+                ctx.fillStyle = '#0c101c';
+                ctx.fillRect(-15, 60, 48, 12);
+
+                // 정장 몸통 (수평으로 기울임)
+                ctx.fillStyle = isGhost ? '#00ff66' : '#1e283d';
+                ctx.fillRect(5, 38, 42, 22);
+
+                // 넥타이 (바람에 뒤로 휘날림)
+                ctx.fillStyle = '#ff2a5f';
+                ctx.beginPath();
+                ctx.moveTo(10, 42); ctx.lineTo(-18, 38); ctx.lineTo(-16, 46); ctx.closePath();
+                ctx.fill();
+
+                // 서류가방 (손에 쥐고 미끄러짐)
+                ctx.fillStyle = '#5c3a21';
+                ctx.fillRect(25, 48, 18, 13);
+
+                // 얼굴 누끼 머리 (가로로 살짝 회전)
+                drawMemberFace(30, 20, 42, -0.15);
+
+            } else {
+                // ==========================
+                // 2. 달리기 & 점프 모션 (역동적인 팔다리 교차)
+                // ==========================
+                const bounceY = runner.isGrounded ? Math.abs(Math.sin(phase)) * 5 : 0;
+
+                // 뒷다리
+                ctx.fillStyle = '#0c101c';
+                ctx.fillRect(16 - legSwing, 52 + bounceY, 11, 34);
+
+                // 정장 몸통 (네이비 자켓)
+                ctx.fillStyle = isGhost ? '#00ff66' : '#1e283d';
+                ctx.fillRect(12, 24 + bounceY, 26, 32);
+
+                // 화이트 셔츠 칼라
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(21, 24 + bounceY); ctx.lineTo(25, 32 + bounceY); ctx.lineTo(29, 24 + bounceY); ctx.closePath();
+                ctx.fill();
+
+                // 넥타이 (달릴 때 뒤로 사인파 펄럭임)
+                ctx.fillStyle = '#ff2a5f';
+                const tieWave = Math.sin(phase * 1.5) * 8;
+                ctx.beginPath();
+                ctx.moveTo(25, 28 + bounceY);
+                ctx.lineTo(15 - tieWave, 38 + bounceY);
+                ctx.lineTo(18 - tieWave, 42 + bounceY);
+                ctx.lineTo(25, 34 + bounceY);
+                ctx.closePath();
+                ctx.fill();
+
+                // 사원증 목걸이 라인
+                ctx.strokeStyle = 'var(--neon-lime)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(21, 38 + bounceY, 8, 11);
+
+                // 앞다리
+                ctx.fillStyle = '#141c2c';
+                ctx.fillRect(16 + legSwing, 52 + bounceY, 11, 34);
+
+                // 서류가방 (손에 쥐고 흔들림)
+                ctx.fillStyle = '#5c3a21';
+                ctx.fillRect(6 + armSwing, 36 + bounceY, 16, 12);
+                ctx.fillStyle = '#d4af37'; // 금색 버클
+                ctx.fillRect(12 + armSwing, 40 + bounceY, 4, 3);
+
+                // 얼굴 실사 누끼 머리 (달릴 때 통통 튀는 바운스)
+                drawMemberFace(25, 0 + bounceY, 46, (legSwing * 0.015));
+            }
+
+            ctx.restore();
+        }
+
+        // 멤버 실제 얼굴 렌더링 (원형 누끼 프레임 + 테두리 광채)
+        function drawMemberFace(cx, cy, size, tilt) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(tilt);
+
+            const r = size / 2;
+
+            // 머리 뒤쪽 테두리 글로우
+            if (boosterTimer > 0) {
+                ctx.shadowColor = '#00ff66';
+                ctx.shadowBlur = 18;
+            }
+
+            // 원형 클리핑으로 실제 얼굴 사진 마스킹
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+
+            const img = memberImgs[selectedMember.id];
+            if (img && img.complete) {
+                ctx.drawImage(img, -r, -r, size, size);
+            } else {
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(-r, -r, size, size);
+            }
+
+            // 가장자리 테두리
+            ctx.restore();
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(tilt);
+            ctx.strokeStyle = boosterTimer > 0 ? '#00ff66' : 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        /* ========================================================
+         * 장애물 렌더링
+         * ======================================================== */
+        function renderObstacles() {
+            obstacles.forEach(obs => {
+                ctx.save();
+                ctx.translate(obs.x, obs.y);
+
+                if (obs.kind === 'slide') {
+                    // 슬라이딩으로 통과하는 상단 장애물 (개찰구/현수막)
+                    ctx.fillStyle = obs.color;
+                    ctx.shadowColor = obs.color;
+                    ctx.shadowBlur = 12;
+                    ctx.fillRect(0, 0, obs.width, obs.height);
+
+                    // 경고 줄무늬
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(4, 4, obs.width - 8, obs.height - 8);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 11px Pretendard';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('SLIDE!', obs.width / 2, obs.height / 2 + 4);
+
+                } else {
+                    // 점프로 넘는 하단 장애물 (캐리어/펜스/킥보드)
+                    ctx.fillStyle = obs.color;
+                    ctx.shadowColor = obs.color;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.roundRect(0, 0, obs.width, obs.height, 8);
+                    ctx.fill();
+
+                    // 아이콘/라벨
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(obs.label.split(' ')[0], obs.width / 2, obs.height / 2 + 6);
+                }
+
+                ctx.restore();
+            });
+        }
+
+        /* ========================================================
+         * 아이템 렌더링
+         * ======================================================== */
+        function renderPickups() {
+            pickups.forEach(pk => {
+                ctx.save();
+                ctx.translate(pk.x, pk.y);
+
+                // 부유 애니메이션
+                const floatY = Math.sin(elapsedTime * 8 + pk.x) * 4;
+
+                ctx.shadowColor = pk.color;
+                ctx.shadowBlur = 14;
+
+                // 아이템 원형 버블
+                ctx.fillStyle = 'rgba(20, 24, 36, 0.9)';
+                ctx.strokeStyle = pk.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(16, 16 + floatY, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(pk.label, 16, 22 + floatY);
+
+                ctx.restore();
+            });
+        }
+
+        /* ========================================================
+         * 파티클 & 속도선 렌더링
+         * ======================================================== */
+        function renderParticles() {
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function renderSpeedLines() {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 255, 102, 0.4)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 12; i++) {
+                const y = Math.random() * canvas.height;
+                const len = 40 + Math.random() * 80;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width, y);
+                ctx.lineTo(canvas.width - len, y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function renderNotices() {
+            floatingNotices.forEach(fn => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, fn.life);
+                ctx.font = '900 15px Pretendard';
+                ctx.fillStyle = fn.color;
+                ctx.shadowColor = fn.color;
+                ctx.shadowBlur = 8;
+                ctx.textAlign = 'left';
+                ctx.fillText(fn.text, fn.x, fn.y);
+                ctx.restore();
+            });
+        }
+
+        /* ========================================================
+         * 헤드업 디스플레이 (HUD)
+         * ======================================================== */
+        function renderHUD() {
+            // 1. 현재 가상 시각 (8:52:00 ~ 9:00:00)
+            const progress = Math.min(1.0, elapsedTime / TARGET_SECONDS);
+            const totalSecRange = 8 * 60; // 8분 구간
+            const currentTotalSec = (52 * 60) + Math.floor(progress * totalSecRange);
+            const mm = Math.floor(currentTotalSec / 60);
+            const ss = currentTotalSec % 60;
+            const timeStr = `08:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+
+            const isUrgent = mm === 59;
+
+            // 시계 박스
+            ctx.fillStyle = 'rgba(10, 14, 22, 0.85)';
+            ctx.strokeStyle = isUrgent ? 'var(--danger-red)' : 'var(--neon-lime)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(18, 16, 175, 44, 10);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = 'bold 18px var(--font-eng)';
+            ctx.fillStyle = isUrgent ? '#ff2a5f' : '#00ff66';
+            ctx.textAlign = 'left';
+            ctx.fillText(`⏰ ${timeStr}`, 30, 44);
+
+            // 2. 거리 진행도 프로그레스 바 (상단 중앙)
+            const barW = 280;
+            const barH = 12;
+            const barX = (canvas.width - barW) / 2;
+            const barY = 22;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barW, barH, 6);
+            ctx.fill();
+
+            const distRatio = Math.min(1.0, distance / GOAL_DISTANCE);
+            ctx.fillStyle = 'var(--neon-lime)';
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barW * distRatio, barH, 6);
+            ctx.fill();
+
+            // 러너 미니 아이콘 표시
+            const runnerMiniX = barX + barW * distRatio;
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏃', runnerMiniX, barY - 2);
+
+            ctx.font = 'bold 11px Pretendard';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.floor(distance)}m / ${GOAL_DISTANCE}m 사옥 도착`, canvas.width / 2, barY + 26);
+
+            // 3. 점수 & 부스터 커피 컵 (우측 상단)
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 18px var(--font-eng)';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`${score.toLocaleString()} P`, canvas.width - 24, 38);
+
+            // 커피 부스터 인디케이터
+            const req = selectedMember.boosterCoffeeReq || 3;
+            let cupStr = '';
+            for (let i = 0; i < req; i++) {
+                cupStr += (i < coffeeCount ? '🧊' : '⚪');
+            }
+            ctx.font = '12px sans-serif';
+            ctx.fillText(`부스터: ${cupStr}`, canvas.width - 24, 56);
+        }
+    </script>
+</body>
+</html>
