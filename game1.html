@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>칼퇴 사수 대작전 — REALWORK FLASH GAME NO. 01</title>
+    <!-- 웹폰트: Space Grotesk & Pretendard -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Pretendard:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #0c0c0e;
+            --bg-card: #151518;
+            --bg-card-hover: #1f1f24;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-lime: #d4ff00;
+            --accent-glow: rgba(212, 255, 0, 0.25);
+            --danger-red: #ff3366;
+            --danger-glow: rgba(255, 51, 102, 0.3);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --font-display: 'Space Grotesk', -apple-system, sans-serif;
+            --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-pixel: 'Press Start 2P', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 1rem 0.5rem 3rem;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* 게임 헤더 바 */
+        .game-nav {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-lime);
+        }
+
+        .game-badge {
+            background: rgba(212, 255, 0, 0.1);
+            border: 1px solid var(--accent-lime);
+            color: var(--accent-lime);
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* 게임 메인 래퍼 */
+        .game-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            margin-top: 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        /* 캔버스 화면 */
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: linear-gradient(180deg, #101014 0%, #17171d 100%);
+            touch-action: none;
+        }
+
+        /* 오버레이 모달 창들 (로비, 일시정지, 게임오버, 클리어) */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 12, 14, 0.94);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1.5rem 1.25rem;
+            z-index: 10;
+            overflow-y: auto;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .screen-overlay.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .title-tag {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            color: var(--accent-lime);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .game-title {
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            text-align: center;
+            margin-bottom: 0.35rem;
+            color: #ffffff;
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .game-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1.25rem;
+            word-break: keep-all;
+        }
+
+        /* 캐릭터 선택 그리드 */
+        .char-section-title {
+            width: 100%;
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-lime);
+            letter-spacing: 0.1em;
+            margin-bottom: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .char-card {
+            background: var(--bg-main);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 0.35rem 0.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .char-card:hover {
+            border-color: var(--accent-lime);
+            transform: translateY(-2px);
+        }
+
+        .char-card.selected {
+            border-color: var(--accent-lime);
+            background: rgba(212, 255, 0, 0.12);
+            box-shadow: 0 0 12px var(--accent-glow);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .char-avatar-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #202025;
+            margin-bottom: 0.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .char-avatar-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .char-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        /* 선택된 캐릭터 상세 정보 카드 */
+        .selected-char-info {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .selected-char-thumb {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-lime);
+            box-shadow: 0 0 10px var(--accent-glow);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .selected-char-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .selected-char-details {
+            flex: 1;
+        }
+
+        .selected-char-title {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.15rem;
+        }
+
+        .selected-char-perk {
+            font-size: 0.8rem;
+            color: var(--accent-lime);
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        /* 가이드 힌트 박스 */
+        .rules-guide {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .rules-guide strong {
+            color: #ffffff;
+        }
+
+        /* 버튼 컴포넌트 */
+        .btn-start {
+            width: 100%;
+            padding: 0.95rem;
+            background: var(--accent-lime);
+            border: none;
+            border-radius: 12px;
+            color: #000000;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            box-shadow: 0 8px 25px var(--accent-glow);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 12px 30px var(--accent-glow);
+        }
+
+        .btn-start:active {
+            transform: translateY(1px);
+        }
+
+        /* 모바일 컨트롤 버튼 (화면 하단) */
+        .mobile-controls {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+            margin-top: 0.75rem;
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .mobile-controls {
+                display: flex;
+            }
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 1.1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 800;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background 0.1s, border-color 0.1s;
+        }
+
+        .ctrl-btn:active {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+        }
+
+        /* 결과 화면 스타일 */
+        .result-badge {
+            font-family: var(--font-pixel);
+            font-size: 2.5rem;
+            color: var(--accent-lime);
+            margin-bottom: 0.75rem;
+            text-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .result-badge.fail {
+            color: var(--danger-red);
+            text-shadow: 0 0 25px var(--danger-glow);
+        }
+
+        .result-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .result-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--bg-main);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-val {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .stat-val.lime {
+            color: var(--accent-lime);
+        }
+
+        .btn-restart {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--accent-lime);
+            border: none;
+            border-radius: 10px;
+            color: #000000;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-sub {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-sub:hover {
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 상단 네비게이션 바 -->
+    <header class="game-nav">
+        <a href="./index.html" class="back-link">
+            <span>←</span> DIRECTORY
+        </a>
+        <span class="game-badge">FLASH GAME 01</span>
+    </header>
+
+    <!-- 게임 뷰포트 컨테이너 -->
+    <div class="game-container">
+
+        <!-- 메인 캔버스 (480 x 680) -->
+        <canvas id="gameCanvas" width="480" height="680"></canvas>
+
+        <!-- 1. 캐릭터 선택 및 로비 오버레이 -->
+        <div id="lobbyScreen" class="screen-overlay">
+            <span class="title-tag">REALWORK ARCADE</span>
+            <h1 class="game-title">칼퇴 사수 대작전</h1>
+            <p class="game-subtitle">오후 5시 50분... 쏟아지는 업무 폭탄을 피해 6시 정각 칼퇴에 성공하세요!</p>
+
+            <div class="char-section-title">
+                <span>SELECT YOUR MEMBER (15)</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">클릭하여 선택</span>
+            </div>
+
+            <!-- 15명 멤버 캐릭터 그리드 -->
+            <div id="charGrid" class="char-grid"></div>
+
+            <!-- 선택된 멤버 특성 안내 -->
+            <div id="charDetailBox" class="selected-char-info">
+                <div class="selected-char-thumb">
+                    <img id="detailImg" src="./assets/members/Lucy.png" alt="선택 멤버">
+                </div>
+                <div class="selected-char-details">
+                    <div id="detailName" class="selected-char-title">Lucy (루시)</div>
+                    <div id="detailPerk" class="selected-char-perk">☕ [AI 조율자] 커피 획득 시 멘탈 회복량 +50%</div>
+                </div>
+            </div>
+
+            <!-- 게임 룰 요약 안내 -->
+            <div class="rules-guide">
+                <strong>💡 플레이 팁:</strong><br>
+                • <strong>피할 것 (Danger):</strong> 💬 슬랙 알림, 📊 엑셀 폭탄, 💣 "퇴근 전 잠깐 볼까?"<br>
+                • <strong>먹을 것 (Good):</strong> 🧊 아이스 아메리카노(멘탈 회복), 💳 법인카드(점수), 🎧 노캔 헤드폰(무적)<br>
+                • <strong>☕ 커피 3잔 연속 획득 시</strong> 5초간 무적 & 모든 업무 파괴 피버 모드!
+            </div>
+
+            <button id="btnStart" class="btn-start">출근 후 칼퇴 도전하기 ▶</button>
+        </div>
+
+        <!-- 2. 게임오버 / 클리어 결과 화면 -->
+        <div id="resultScreen" class="screen-overlay hidden">
+            <div id="resultBadge" class="result-badge">S</div>
+            <h2 id="resultTitle" class="result-title">칼퇴 성공!</h2>
+            <p id="resultDesc" class="result-desc">6시 정각 지문 태그를 찍고 당당하게 퇴근했습니다!</p>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">남은 멘탈</div>
+                    <div id="resMental" class="stat-val lime">85%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">최종 월급 보너스</div>
+                    <div id="resScore" class="stat-val">3,450P</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">마신 커피</div>
+                    <div id="resCoffee" class="stat-val">6잔</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">피해낸 업무</div>
+                    <div id="resDodged" class="stat-val">42건</div>
+                </div>
+            </div>
+
+            <button id="btnRetry" class="btn-restart">다시 도전하기 ↺</button>
+            <button id="btnChangeChar" class="btn-sub">다른 멤버 선택하기</button>
+        </div>
+
+    </div>
+
+    <!-- 모바일 전용 좌/우 터치 버튼 -->
+    <div class="mobile-controls">
+        <button id="btnLeft" class="ctrl-btn">◀ LEFT</button>
+        <button id="btnRight" class="ctrl-btn">RIGHT ▶</button>
+    </div>
+
+    <script>
+        /* ========================================================
+         * 15명 멤버 캐릭터 데이터 및 고유 패시브 정의
+         * ======================================================== */
+        const MEMBERS = [
+            { id: 'Lucy', name: 'Lucy', title: '루시', perkName: 'AI 조율자', perkDesc: '☕ 커피 획득 시 멘탈 회복량 +50%', img: './assets/members/Lucy.png', bonusCoffee: 1.5, speedMult: 1.0, shieldTime: 0, mentalBonus: 0 },
+            { id: 'Abby', name: 'Abby', title: '애비', perkName: '칼퇴 요정', perkDesc: '🏃 기본 이동속도 +15% 향상', img: './assets/members/Abby.png', bonusCoffee: 1.0, speedMult: 1.15, shieldTime: 0, mentalBonus: 0 },
+            { id: 'Bella', name: 'Bella', title: '벨라', perkName: '무한 긍정', perkDesc: '🛡️ 업무 피격 시 멘탈 데미지 25% 경감', img: './assets/members/Bella.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, defMult: 0.75 },
+            { id: 'Billy', name: 'Billy', title: '빌리', perkName: '엑셀 마스터', perkDesc: '📊 엑셀/서류 폭탄 데미지 50% 무효화', img: './assets/members/Billy.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, excelDef: 0.5 },
+            { id: 'Boda', name: 'Boda', title: '보다', perkName: '시각적 통찰', perkDesc: '👁️ 모든 낙하물의 낙하 궤적이 선명히 표시', img: './assets/members/Boda.png', bonusCoffee: 1.0, speedMult: 1.05, shieldTime: 0, mentalBonus: 0, seePath: true },
+            { id: 'Danny', name: 'Danny', title: '대니', perkName: '강철 멘탈', perkDesc: '💪 최대 멘탈 125로 시작 (기본 100)', img: './assets/members/Danny.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 25 },
+            { id: 'Eden', name: 'Eden', title: '이든', perkName: '슬랙 무음화', perkDesc: '🔕 슬랙 알림 충돌 시 40% 확률로 튕겨냄', img: './assets/members/Eden.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, slackDodge: 0.4 },
+            { id: 'Hewon', name: 'Hewon', title: '혜원', perkName: '광란의 부스터', perkDesc: '⚡ 피버 모드 지속시간 +2초 (총 7초)', img: './assets/members/Hewon.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, feverBonus: 2 },
+            { id: 'Julie', name: 'Julie', title: '줄리', perkName: '법카의 신', perkDesc: '💳 모든 점수 획득 시 +30% 추가 보너스', img: './assets/members/Julie.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, scoreMult: 1.3 },
+            { id: 'Kate', name: 'Kate', title: '케이트', perkName: '오피스 피스', perkDesc: '🕊️ 커피 획득 시 주변 업무 폭탄 정화', img: './assets/members/Kate.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, cleanArea: true },
+            { id: 'Kwazii', name: 'Kwazii', title: '콰지', perkName: '순간 대시', perkDesc: '⚡ 날렵한 회피 기동 (이동속도 +20%)', img: './assets/members/Kwazii.png', bonusCoffee: 1.0, speedMult: 1.20, shieldTime: 0, mentalBonus: 0 },
+            { id: 'Mark', name: 'Mark', title: '마크', perkName: '스케줄 귀재', perkDesc: '⏰ 18시 정각 도달 시 클리어 보너스 +1,500P', img: './assets/members/Mark.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, clearBonus: 1500 },
+            { id: 'Norah', name: 'Norah', title: '노라', perkName: '노캔 상시가동', perkDesc: '🎧 게임 시작 시 5초간 무적 보호막 기본 제공', img: './assets/members/Norah.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 5, mentalBonus: 0 },
+            { id: 'Peace', name: 'Peace', title: '피스', perkName: '마음의 평화', perkDesc: '🌿 6초 동안 피격 없으면 멘탈 +5 자동 회복', img: './assets/members/Peace.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, regen: true },
+            { id: 'Rachel', name: 'Rachel', title: '레이첼', perkName: '아이디어 뱅크', perkDesc: '💡 커피 2잔만 마셔도 피버 모드 즉시 발동!', img: './assets/members/Rachel.png', bonusCoffee: 1.0, speedMult: 1.0, shieldTime: 0, mentalBonus: 0, feverTarget: 2 }
+        ];
+
+        let selectedMember = MEMBERS[0];
+
+        /* ========================================================
+         * Web Audio API 레트로 8비트 사운드 제너레이터
+         * ======================================================== */
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playTone(freq, type, duration, startVol = 0.15) {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(startVol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            // 긍정 아이템 획득 사운드
+            item() {
+                this.init();
+                this.playTone(523.25, 'sine', 0.08, 0.2); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.12, 0.2), 60); // E5
+            }
+            // 커피 획득 사운드
+            coffee() {
+                this.init();
+                this.playTone(440, 'triangle', 0.08, 0.2);
+                setTimeout(() => this.playTone(880, 'triangle', 0.18, 0.25), 70);
+            }
+            // 슬랙 알림 피격 사운드 ("따당!")
+            slack() {
+                this.init();
+                this.playTone(784, 'square', 0.07, 0.18); // G5
+                setTimeout(() => this.playTone(1046.5, 'square', 0.14, 0.2), 70); // C6
+            }
+            // 데미지 피격 사운드
+            hit() {
+                this.init();
+                this.playTone(180, 'sawtooth', 0.18, 0.3);
+                setTimeout(() => this.playTone(110, 'sawtooth', 0.2, 0.3), 80);
+            }
+            // 피버 모드 발동
+            fever() {
+                this.init();
+                [523, 659, 784, 1046].forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'sine', 0.18, 0.25), i * 70);
+                });
+            }
+            // 게임 클리어 팡파레
+            clear() {
+                this.init();
+                const notes = [523, 659, 784, 1046, 1318];
+                notes.forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'triangle', 0.25, 0.3), i * 90);
+                });
+            }
+            // 게임 오버
+            gameover() {
+                this.init();
+                const notes = [440, 392, 349, 293];
+                notes.forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 'sawtooth', 0.25, 0.25), i * 120);
+                });
+            }
+        }
+        const sfx = new SoundFX();
+
+        /* ========================================================
+         * 캔버스 게임 엔진
+         * ======================================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 이미지 캐시
+        const memberImages = {};
+        MEMBERS.forEach(m => {
+            const img = new Image();
+            img.src = m.img;
+            memberImages[m.id] = img;
+        });
+
+        // 게임 상태 변수
+        let gameState = 'LOBBY'; // LOBBY, PLAYING, GAMEOVER, CLEAR
+        let score = 0;
+        let mental = 100;
+        let maxMental = 100;
+        let coffeeCount = 0;
+        let coffeeNeeded = 3;
+        let dodgedCount = 0;
+        let coffeeDrunk = 0;
+
+        // 게임 시간 (총 60초 = 17:50:00 ~ 18:00:00)
+        const TOTAL_GAME_SECONDS = 60;
+        let timeElapsed = 0; // 초 단위
+
+        // 플레이어 오브젝트
+        const player = {
+            x: 240,
+            y: 590,
+            width: 58,
+            height: 58,
+            baseSpeed: 5.5,
+            speed: 5.5,
+            vx: 0,
+            shieldTime: 0,
+            feverTime: 0,
+            tilt: 0,
+            lastHitTime: 0
+        };
+
+        // 낙하 오브젝트 배열 및 파티클
+        let dropItems = [];
+        let particles = [];
+        let floatingTexts = [];
+
+        // 입력 상태
+        const keys = { left: false, right: false };
+
+        /* ========================================================
+         * UI 이벤트 & 로비 캐릭터 선택 세팅
+         * ======================================================== */
+        const charGrid = document.getElementById('charGrid');
+        const detailImg = document.getElementById('detailImg');
+        const detailName = document.getElementById('detailName');
+        const detailPerk = document.getElementById('detailPerk');
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const resultScreen = document.getElementById('resultScreen');
+
+        function renderCharGrid() {
+            charGrid.innerHTML = '';
+            MEMBERS.forEach(m => {
+                const card = document.createElement('div');
+                card.className = `char-card ${m.id === selectedMember.id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="char-avatar-wrap">
+                        <img src="${m.img}" alt="${m.name}">
+                    </div>
+                    <div class="char-name">${m.name}</div>
+                `;
+                card.addEventListener('click', () => {
+                    selectedMember = m;
+                    renderCharGrid();
+                    updateDetailBox();
+                    sfx.item();
+                });
+                charGrid.appendChild(card);
+            });
+        }
+
+        function updateDetailBox() {
+            detailImg.src = selectedMember.img;
+            detailName.textContent = `${selectedMember.name} (${selectedMember.title})`;
+            detailPerk.textContent = selectedMember.perkDesc;
+        }
+
+        renderCharGrid();
+        updateDetailBox();
+
+        // 게임 시작 버튼
+        document.getElementById('btnStart').addEventListener('click', () => {
+            sfx.init();
+            startGame();
+        });
+
+        document.getElementById('btnRetry').addEventListener('click', () => {
+            sfx.init();
+            startGame();
+        });
+
+        document.getElementById('btnChangeChar').addEventListener('click', () => {
+            resultScreen.classList.add('hidden');
+            lobbyScreen.classList.remove('hidden');
+            gameState = 'LOBBY';
+        });
+
+        // 키보드 이벤트
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+        });
+
+        // 모바일 터치 버튼
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        const bindTouch = (elem, keyName) => {
+            elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+            elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+            elem.addEventListener('mousedown', () => { keys[keyName] = true; });
+            elem.addEventListener('mouseup', () => { keys[keyName] = false; });
+            elem.addEventListener('mouseleave', () => { keys[keyName] = false; });
+        };
+        bindTouch(btnLeft, 'left');
+        bindTouch(btnRight, 'right');
+
+        // 캔버스 터치 / 드래그 직접 조작 지원
+        let isTouchingCanvas = false;
+        canvas.addEventListener('pointerdown', (e) => {
+            isTouchingCanvas = true;
+            handleCanvasPointer(e);
+        });
+        canvas.addEventListener('pointermove', (e) => {
+            if (isTouchingCanvas) handleCanvasPointer(e);
+        });
+        window.addEventListener('pointerup', () => { isTouchingCanvas = false; });
+
+        function handleCanvasPointer(e) {
+            if (gameState !== 'PLAYING') return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const targetX = (e.clientX - rect.left) * scaleX;
+            player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, targetX));
+        }
+
+        /* ========================================================
+         * 게임 초기화 & 루프
+         * ======================================================== */
+        function startGame() {
+            lobbyScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            gameState = 'PLAYING';
+
+            // 캐릭터 스탯 적용
+            maxMental = 100 + (selectedMember.mentalBonus || 0);
+            mental = maxMental;
+            player.speed = player.baseSpeed * (selectedMember.speedMult || 1.0);
+            player.shieldTime = selectedMember.shieldTime || 0;
+            player.feverTime = 0;
+            player.x = canvas.width / 2;
+            player.y = 590;
+
+            coffeeNeeded = selectedMember.feverTarget || 3;
+            coffeeCount = 0;
+            score = 0;
+            timeElapsed = 0;
+            dodgedCount = 0;
+            coffeeDrunk = 0;
+
+            dropItems = [];
+            particles = [];
+            floatingTexts = [];
+
+            lastFrameTime = performance.now();
+        }
+
+        /* ========================================================
+         * 드롭 아이템 정의 및 생성
+         * ======================================================== */
+        const ITEM_TYPES = [
+            // 나쁜 업무들 (Danger)
+            { id: 'slack', label: '💬 지금통화가능?', type: 'danger', damage: 18, color: '#e01e5a', size: 36, speedMin: 3.2, speedMax: 5.2 },
+            { id: 'excel', label: '📊 엑셀폭탄', type: 'danger', damage: 14, color: '#107c41', size: 32, speedMin: 2.8, speedMax: 4.8 },
+            { id: 'boss', label: '💣 퇴근전미팅', type: 'danger', damage: 25, color: '#ff3366', size: 42, speedMin: 3.5, speedMax: 5.8 },
+            { id: 'bug', label: '⚠️ 긴급버그', type: 'danger', damage: 20, color: '#f59e0b', size: 34, speedMin: 3.0, speedMax: 5.5 },
+            // 좋은 아이템들 (Good)
+            { id: 'coffee', label: '🧊 아아(커피)', type: 'coffee', heal: 20, color: '#38bdf8', size: 34, speedMin: 2.5, speedMax: 4.2 },
+            { id: 'card', label: '💳 법인카드', type: 'score', score: 500, color: '#d4ff00', size: 32, speedMin: 2.5, speedMax: 4.0 },
+            { id: 'headphone', label: '🎧 노캔무적', type: 'shield', shield: 5, color: '#a855f7', size: 34, speedMin: 2.2, speedMax: 3.8 },
+            { id: 'donut', label: '🍩 당충전', type: 'heal', heal: 12, color: '#ec4899', size: 30, speedMin: 2.5, speedMax: 4.0 }
+        ];
+
+        let spawnTimer = 0;
+
+        function spawnDropItem() {
+            // 시간 경과에 따라 난이도(생성 속도 및 위험 아이템 비중) 증가
+            const isLateTime = timeElapsed > 35;
+            const roll = Math.random();
+            let template;
+
+            if (roll < 0.26) {
+                // 커피 및 힐 아이템 (26%)
+                template = Math.random() < 0.65 ? ITEM_TYPES.find(i => i.id === 'coffee') : ITEM_TYPES.find(i => i.id === 'donut');
+            } else if (roll < 0.38) {
+                // 법카 및 노캔 (12%)
+                template = Math.random() < 0.7 ? ITEM_TYPES.find(i => i.id === 'card') : ITEM_TYPES.find(i => i.id === 'headphone');
+            } else {
+                // 위험 업무 (62%)
+                const dangerList = ITEM_TYPES.filter(i => i.type === 'danger');
+                template = dangerList[Math.floor(Math.random() * dangerList.length)];
+            }
+
+            const speedBoost = 1 + (timeElapsed / TOTAL_GAME_SECONDS) * 0.75;
+            const speed = (template.speedMin + Math.random() * (template.speedMax - template.speedMin)) * speedBoost;
+
+            dropItems.push({
+                ...template,
+                x: 25 + Math.random() * (canvas.width - 50),
+                y: -40,
+                speedY: speed,
+                rotation: (Math.random() - 0.5) * 0.05,
+                angle: 0
+            });
+        }
+
+        /* ========================================================
+         * 파티클 & 플로팅 텍스트 이펙트
+         * ======================================================== */
+        function addParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1.5 + Math.random() * 4.5;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color,
+                    life: 1.0,
+                    decay: 0.025 + Math.random() * 0.03,
+                    size: 2.5 + Math.random() * 3.5
+                });
+            }
+        }
+
+        function addFloatingText(x, y, text, color) {
+            floatingTexts.push({
+                x, y,
+                text,
+                color,
+                life: 1.0,
+                vy: -1.8
+            });
+        }
+
+        /* ========================================================
+         * 메인 업데이트 & 렌더링 루프
+         * ======================================================== */
+        let lastFrameTime = performance.now();
+
+        function gameLoop(now) {
+            const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+            lastFrameTime = now;
+
+            if (gameState === 'PLAYING') {
+                update(dt);
+            }
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+        requestAnimationFrame(gameLoop);
+
+        function update(dt) {
+            timeElapsed += dt;
+
+            // 시간 초과 체크 (60초 도달 시 18:00 칼퇴 성공!)
+            if (timeElapsed >= TOTAL_GAME_SECONDS) {
+                gameClear();
+                return;
+            }
+
+            // 플레이어 좌우 이동
+            let dir = 0;
+            if (keys.left) dir -= 1;
+            if (keys.right) dir += 1;
+
+            player.x += dir * player.speed;
+            player.tilt = dir * 0.12;
+
+            // 경계 제한
+            const r = player.width / 2;
+            if (player.x < r) player.x = r;
+            if (player.x > canvas.width - r) player.x = canvas.width - r;
+
+            // 무적 / 피버 타이머 감소
+            if (player.shieldTime > 0) player.shieldTime = Math.max(0, player.shieldTime - dt);
+            if (player.feverTime > 0) player.feverTime = Math.max(0, player.feverTime - dt);
+
+            // Peace 캐릭터 패시브: 6초간 미피격 시 멘탈 자동 회복
+            if (selectedMember.regen && nowInSeconds() - player.lastHitTime > 6) {
+                if (mental < maxMental) {
+                    mental = Math.min(maxMental, mental + 5 * dt);
+                }
+            }
+
+            // 아이템 스폰 타이머 (시간 경과에 따라 생성 간격 감소)
+            spawnTimer += dt;
+            const currentSpawnInterval = Math.max(0.38, 0.95 - (timeElapsed / TOTAL_GAME_SECONDS) * 0.55);
+            if (spawnTimer >= currentSpawnInterval) {
+                spawnTimer = 0;
+                spawnDropItem();
+            }
+
+            // 낙하 아이템 업데이트 & 충돌 판정
+            for (let i = dropItems.length - 1; i >= 0; i--) {
+                const item = dropItems[i];
+                item.y += item.speedY;
+                item.angle += item.rotation;
+
+                // 충돌 검사 (원-원 충돌)
+                const dx = item.x - player.x;
+                const dy = item.y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const hitRadius = (player.width / 2) + (item.size / 2) - 6;
+
+                if (dist < hitRadius) {
+                    handleCollision(item);
+                    dropItems.splice(i, 1);
+                    continue;
+                }
+
+                // 바닥 통과 시
+                if (item.y > canvas.height + 40) {
+                    if (item.type === 'danger') {
+                        dodgedCount++;
+                        // 점수 조금 부여
+                        score += Math.round(15 * (selectedMember.scoreMult || 1.0));
+                    }
+                    dropItems.splice(i, 1);
+                }
+            }
+
+            // 파티클 업데이트
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // 플로팅 텍스트 업데이트
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.life -= 0.02;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            // 멘탈 0 체크 (게임오버)
+            if (mental <= 0) {
+                gameOver();
+            }
+        }
+
+        function nowInSeconds() {
+            return performance.now() / 1000;
+        }
+
+        /* ========================================================
+         * 충돌 이벤트 처리 (피격 / 획득)
+         * ======================================================== */
+        function handleCollision(item) {
+            const isFever = player.feverTime > 0;
+            const isShielded = player.shieldTime > 0 || isFever;
+
+            if (item.type === 'danger') {
+                if (isFever) {
+                    // 피버 모드일 때는 모든 업무를 격파하고 보너스 점수 획득!
+                    score += Math.round(200 * (selectedMember.scoreMult || 1.0));
+                    addParticles(item.x, item.y, '#d4ff00', 14);
+                    addFloatingText(item.x, item.y, '+200 업무격파! 🔥', '#d4ff00');
+                    sfx.item();
+                    return;
+                }
+
+                if (isShielded) {
+                    addParticles(item.x, item.y, '#a855f7', 10);
+                    addFloatingText(item.x, item.y, '🛡️ 방어 성공!', '#a855f7');
+                    sfx.item();
+                    return;
+                }
+
+                // Eden 패시브: 슬랙 알림 40% 확률로 튕겨냄
+                if (item.id === 'slack' && selectedMember.slackDodge && Math.random() < selectedMember.slackDodge) {
+                    addParticles(item.x, item.y, '#d4ff00', 8);
+                    addFloatingText(item.x, item.y, '🔕 슬랙 무음 방어!', '#d4ff00');
+                    sfx.item();
+                    return;
+                }
+
+                // 피격 데미지 계산
+                let dmg = item.damage;
+                if (selectedMember.defMult) dmg *= selectedMember.defMult;
+                if (item.id === 'excel' && selectedMember.excelDef) dmg *= selectedMember.excelDef;
+
+                mental = Math.max(0, mental - dmg);
+                player.lastHitTime = nowInSeconds();
+
+                addParticles(item.x, item.y, '#ff3366', 15);
+                addFloatingText(item.x, item.y, `-${Math.round(dmg)} 멘탈 깎임! 💥`, '#ff3366');
+
+                if (item.id === 'slack') sfx.slack();
+                else sfx.hit();
+
+            } else if (item.type === 'coffee') {
+                // 커피 획득
+                coffeeDrunk++;
+                const healAmt = item.heal * (selectedMember.bonusCoffee || 1.0);
+                mental = Math.min(maxMental, mental + healAmt);
+                coffeeCount++;
+
+                score += Math.round(100 * (selectedMember.scoreMult || 1.0));
+                addParticles(item.x, item.y, '#38bdf8', 12);
+                addFloatingText(item.x, item.y, `+${Math.round(healAmt)} 멘탈 회복 ☕`, '#38bdf8');
+                sfx.coffee();
+
+                // Kate 패시브: 커피 획득 시 화면 내 위험 업무 일괄 정화
+                if (selectedMember.cleanArea) {
+                    dropItems = dropItems.filter(it => it.type !== 'danger');
+                    addFloatingText(player.x, player.y - 30, '🕊️ 오피스 평화 발동!', '#d4ff00');
+                }
+
+                // 피버 체크
+                if (coffeeCount >= coffeeNeeded) {
+                    coffeeCount = 0;
+                    const duration = 5 + (selectedMember.feverBonus || 0);
+                    player.feverTime = duration;
+                    addFloatingText(player.x, player.y - 45, '🔥 FEVER TIME! 칼퇴 폭주! 🔥', '#d4ff00');
+                    sfx.fever();
+                }
+
+            } else if (item.type === 'score') {
+                // 법카 보너스 점수
+                const pts = Math.round(item.score * (selectedMember.scoreMult || 1.0));
+                score += pts;
+                addParticles(item.x, item.y, '#d4ff00', 16);
+                addFloatingText(item.x, item.y, `+${pts}P 법카 찬스! 💳`, '#d4ff00');
+                sfx.item();
+
+            } else if (item.type === 'shield') {
+                // 노캔 헤드폰 무적 실드
+                player.shieldTime = item.shield;
+                addParticles(item.x, item.y, '#a855f7', 14);
+                addFloatingText(item.x, item.y, '🎧 5초간 무적 노캔!', '#a855f7');
+                sfx.item();
+
+            } else if (item.type === 'heal') {
+                // 간식 당 충전
+                mental = Math.min(maxMental, mental + item.heal);
+                score += Math.round(50 * (selectedMember.scoreMult || 1.0));
+                addParticles(item.x, item.y, '#ec4899', 10);
+                addFloatingText(item.x, item.y, `+${item.heal} 당 충전 🍩`, '#ec4899');
+                sfx.item();
+            }
+        }
+
+        /* ========================================================
+         * 게임오버 & 게임클리어 처리
+         * ======================================================== */
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            sfx.gameover();
+
+            const badge = document.getElementById('resultBadge');
+            badge.className = 'result-badge fail';
+            badge.textContent = '💀';
+
+            document.getElementById('resultTitle').textContent = '번아웃... 야근 확정';
+            document.getElementById('resultDesc').textContent = '멘탈이 바닥나 결국 쏟아지는 업무에 갇혀버렸습니다...';
+
+            updateResultStats();
+            resultScreen.classList.remove('hidden');
+        }
+
+        function gameClear() {
+            gameState = 'CLEAR';
+            sfx.clear();
+
+            if (selectedMember.clearBonus) {
+                score += selectedMember.clearBonus;
+            }
+
+            const badge = document.getElementById('resultBadge');
+            badge.className = 'result-badge';
+            
+            // 랭크 계산
+            let rank = 'S';
+            if (mental < 40) rank = 'B';
+            else if (mental < 70) rank = 'A';
+            badge.textContent = rank;
+
+            document.getElementById('resultTitle').textContent = '🎉 18:00 칼퇴 성공!';
+            document.getElementById('resultDesc').textContent = `${selectedMember.name} 님은 가벼운 발걸음으로 사원증을 태그하고 퇴근했습니다!`;
+
+            updateResultStats();
+            resultScreen.classList.remove('hidden');
+        }
+
+        function updateResultStats() {
+            document.getElementById('resMental').textContent = `${Math.max(0, Math.round(mental))}%`;
+            document.getElementById('resScore').textContent = `${score.toLocaleString()}P`;
+            document.getElementById('resCoffee').textContent = `${coffeeDrunk}잔`;
+            document.getElementById('resDodged').textContent = `${dodgedCount}건`;
+        }
+
+        /* ========================================================
+         * 렌더링 파이프라인
+         * ======================================================== */
+        function render() {
+            // 배경 지우기
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 오피스 그리드 배경 라인 (플래시 테크 감성)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Boda 패시브: 낙하물 궤적 및 바닥 타겟 표시
+            if (selectedMember.seePath && gameState === 'PLAYING') {
+                dropItems.forEach(item => {
+                    ctx.fillStyle = item.type === 'danger' ? 'rgba(255, 51, 102, 0.15)' : 'rgba(56, 189, 248, 0.15)';
+                    ctx.fillRect(item.x - item.size / 2, item.y, item.size, canvas.height - item.y);
+                    
+                    ctx.strokeStyle = item.type === 'danger' ? 'rgba(255, 51, 102, 0.4)' : 'rgba(56, 189, 248, 0.4)';
+                    ctx.strokeRect(item.x - 12, canvas.height - 70, 24, 6);
+                });
+            }
+
+            // 피버 모드일 때 테두리 발광 이펙트
+            if (player.feverTime > 0) {
+                ctx.strokeStyle = 'rgba(212, 255, 0, 0.6)';
+                ctx.lineWidth = 8;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 낙하 아이템 그리기
+            dropItems.forEach(item => {
+                ctx.save();
+                ctx.translate(item.x, item.y);
+                ctx.rotate(item.angle);
+
+                // 아이템 그림자/글로우
+                ctx.shadowColor = item.color;
+                ctx.shadowBlur = 10;
+
+                // 아이템 배경 버블
+                ctx.fillStyle = '#1c1c22';
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(-item.size / 2, -item.size / 2, item.size, item.size, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                // 라벨 / 아이콘 텍스트
+                ctx.shadowBlur = 0;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const emoji = item.label.split(' ')[0];
+                ctx.font = `${item.size * 0.58}px sans-serif`;
+                ctx.fillText(emoji, 0, 0);
+
+                ctx.restore();
+            });
+
+            // 플레이어 그리기 (얼굴 사진 원형 클리핑 + 이펙트)
+            renderPlayer();
+
+            // 파티클 그리기
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 6;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 플로팅 텍스트 그리기
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, ft.life);
+                ctx.font = 'bold 15px Pretendard, sans-serif';
+                ctx.fillStyle = ft.color;
+                ctx.shadowColor = ft.color;
+                ctx.shadowBlur = 8;
+                ctx.textAlign = 'center';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+
+            // 상단 인게임 헤드업 디스플레이 (HUD)
+            if (gameState === 'PLAYING') {
+                renderHUD();
+            }
+        }
+
+        /* ========================================================
+         * 플레이어 캐릭터 렌더링
+         * ======================================================== */
+        function renderPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.tilt);
+
+            const r = player.width / 2;
+
+            // 피버 모드일 때 무지개 아우라
+            if (player.feverTime > 0) {
+                ctx.shadowColor = '#d4ff00';
+                ctx.shadowBlur = 25;
+                ctx.strokeStyle = '#d4ff00';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, r + 8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // 노캔 무적 실드 이펙트
+            if (player.shieldTime > 0) {
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.arc(0, 0, r + 6, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 플레이어 원형 얼굴 렌더링
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+
+            const img = memberImages[selectedMember.id];
+            if (img && img.complete) {
+                ctx.drawImage(img, -r, -r, player.width, player.height);
+            } else {
+                ctx.fillStyle = '#2d2d35';
+                ctx.fillRect(-r, -r, player.width, player.height);
+            }
+            ctx.restore();
+
+            // 테두리 링
+            ctx.strokeStyle = player.feverTime > 0 ? '#d4ff00' : (player.shieldTime > 0 ? '#a855f7' : 'rgba(255, 255, 255, 0.4)');
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 멤버 이름표 뱃지 (발밑)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.roundRect(-30, r + 4, 60, 18, 6);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px Pretendard';
+            ctx.textAlign = 'center';
+            ctx.fillText(selectedMember.name, 0, r + 16);
+
+            ctx.restore();
+        }
+
+        /* ========================================================
+         * 인게임 HUD 렌더링
+         * ======================================================== */
+        function renderHUD() {
+            // HUD 상단 반투명 바
+            ctx.fillStyle = 'rgba(12, 12, 14, 0.75)';
+            ctx.fillRect(0, 0, canvas.width, 70);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, 70); ctx.lineTo(canvas.width, 70); ctx.stroke();
+
+            // 1. 현재 시각 계산 (17:50:00부터 18:00:00까지 총 10분 구간을 60초에 매핑)
+            const progress = Math.min(1.0, timeElapsed / TOTAL_GAME_SECONDS);
+            const totalOfficeMinutes = 10;
+            const currentMinute = 50 + Math.floor(progress * totalOfficeMinutes);
+            const currentSec = Math.floor((progress * totalOfficeMinutes * 60) % 60);
+            const timeStr = `17:${String(currentMinute).padStart(2, '0')}:${String(currentSec).padStart(2, '0')}`;
+
+            ctx.font = 'bold 18px "Space Grotesk", sans-serif';
+            ctx.fillStyle = progress > 0.85 ? '#d4ff00' : '#ffffff';
+            ctx.textAlign = 'left';
+            ctx.fillText(`🕒 ${timeStr}`, 15, 30);
+
+            ctx.font = '11px Pretendard';
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.fillText(`18:00 칼퇴까지 ${Math.max(0, Math.round(TOTAL_GAME_SECONDS - timeElapsed))}초`, 15, 48);
+
+            // 2. 점수
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 16px "Space Grotesk", sans-serif';
+            ctx.fillStyle = '#d4ff00';
+            ctx.fillText(`${score.toLocaleString()} P`, canvas.width - 15, 30);
+
+            ctx.font = '11px Pretendard';
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.fillText(`월급 보너스`, canvas.width - 15, 48);
+
+            // 3. 멘탈 HP 바 (화면 중앙 상단)
+            const barW = 140;
+            const barH = 12;
+            const barX = (canvas.width - barW) / 2;
+            const barY = 22;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.roundRect(barX, barY, barW, barH, 6);
+            ctx.fill();
+
+            const hpRatio = Math.max(0, mental / maxMental);
+            let hpColor = '#10b981';
+            if (hpRatio < 0.3) hpColor = '#ff3366';
+            else if (hpRatio < 0.6) hpColor = '#f59e0b';
+
+            ctx.fillStyle = hpColor;
+            ctx.roundRect(barX, barY, barW * hpRatio, barH, 6);
+            ctx.fill();
+
+            ctx.font = 'bold 10px Pretendard';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`멘탈 ${Math.round(mental)}%`, canvas.width / 2, barY + 24);
+
+            // 4. 피버 게이지 (커피 컵 아이콘 3칸)
+            const cupX = canvas.width / 2 - ((coffeeNeeded * 18) / 2) + 9;
+            for (let i = 0; i < coffeeNeeded; i++) {
+                const cx = cupX + i * 20;
+                ctx.font = '13px sans-serif';
+                ctx.fillText(i < coffeeCount ? '☕' : '⚪', cx, barY + 40);
+            }
+        }
+    </script>
+</body>
+</html>
