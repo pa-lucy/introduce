@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYUNTER — ISSUE NO. 01 : TASTE ARCHIVE</title>
+    <!-- 웹폰트: Space Grotesk(영문 타이포) & Pretendard(국문) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0e0e10;
+            --bg-card: #18181b;
+            --bg-card-hover: #222227;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-lime: #d4ff00;
+            --accent-glow: rgba(212, 255, 0, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(212, 255, 0, 0.4);
+            --font-display: 'Space Grotesk', -apple-system, sans-serif;
+            --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            padding: 0 1.25rem 5rem;
+        }
+
+        /* 래퍼 컨테이너 */
+        .magazine-wrapper {
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        /* 상단 에디토리얼 바코드 & 이슈 바 */
+        .issue-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .issue-tag {
+            color: var(--accent-lime);
+            font-weight: 700;
+        }
+
+        /* 커버 / 히어로 섹션 */
+        .cover-hero {
+            padding: 3rem 0 2rem;
+        }
+
+        .cover-meta {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .cover-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 8vw, 4.2rem);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .cover-subtitle {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+        }
+
+        .cover-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            word-break: keep-all;
+            line-height: 1.65;
+            margin-bottom: 2rem;
+        }
+
+        /* 해시태그 키워드 뱃지 */
+        .keyword-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--accent-lime);
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 9999px;
+            letter-spacing: -0.01em;
+            transition: all 0.2s ease;
+        }
+
+        .badge:hover {
+            border-color: var(--accent-lime);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        /* 사진 프레임 */
+        .photo-container {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 4rem;
+        }
+
+        .photo-frame {
+            position: relative;
+            width: 100%;
+            height: 580px;
+            overflow: hidden;
+            background: #141416;
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 25%;
+            filter: contrast(102%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .photo-container:hover img {
+            transform: scale(1.02);
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(14, 14, 16, 0.95), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .photo-caption-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .photo-caption-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .photo-badge-note {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: var(--accent-lime);
+            font-family: var(--font-display);
+        }
+
+        /* 섹션 공통 헤더 */
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-num {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            color: var(--accent-lime);
+            font-weight: 700;
+            margin-right: 0.75rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        /* 1. 키워드 아카이브 카드 */
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 4rem;
+        }
+
+        .archive-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.25s ease;
+        }
+
+        .archive-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px -10px var(--accent-glow);
+        }
+
+        .card-tag {
+            font-family: var(--font-display);
+            color: var(--accent-lime);
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-heading {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .card-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+
+        /* 2. 에센셜 취향 큐레이션 */
+        .curation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 4rem;
+        }
+
+        .curation-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .curation-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .item-icon {
+            font-size: 1.6rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+        }
+
+        .item-category {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .item-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .item-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* 3. 3문 3답 인터뷰 */
+        .interview-box {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 4rem;
+        }
+
+        .qa-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .qa-q {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .q-prefix {
+            color: var(--accent-lime);
+            font-family: var(--font-display);
+            font-weight: 700;
+        }
+
+        .qa-a {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            padding-left: 1.6rem;
+            word-break: keep-all;
+        }
+
+        /* 4. 밸런스 게임 (details & summary) */
+        .balance-box {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 4rem;
+        }
+
+        .balance-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .balance-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .balance-summary {
+            padding: 1.2rem 1.4rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .balance-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .balance-summary .toggle-btn {
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            color: var(--accent-lime);
+            background: rgba(212, 255, 0, 0.08);
+            border: 1px solid rgba(212, 255, 0, 0.25);
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .balance-card[open] .balance-summary {
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .balance-card[open] .toggle-btn {
+            background: var(--accent-lime);
+            color: #000;
+        }
+
+        .balance-content {
+            padding: 1.25rem 1.4rem;
+            background: #121215;
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .balance-choice {
+            color: var(--accent-lime);
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            font-size: 1rem;
+        }
+
+        /* 5. 메시지 남기기 (폼) & SNS */
+        .contact-card {
+            background: linear-gradient(145deg, #18181b, #121215);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 2.25rem;
+            margin-bottom: 3rem;
+        }
+
+        .contact-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .contact-header p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            background: #111114;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-lime);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-submit {
+            background: var(--accent-lime);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem 1.75rem;
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: -0.01em;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            background: #e2ff40;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(212, 255, 0, 0.4);
+        }
+
+        /* SNS 링크 */
+        .sns-links {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .sns-btn {
+            flex: 1;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .sns-btn:hover {
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+        }
+
+        /* 푸터 */
+        .magazine-footer {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: var(--font-display);
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 600px) {
+            .photo-frame {
+                height: 460px;
+            }
+            .cover-title {
+                font-size: 2.3rem;
+            }
+            .archive-grid {
+                grid-template-columns: 1fr;
+            }
+            .curation-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            .sns-links {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="magazine-wrapper">
+
+        <!-- 상단 에디토리얼 인덱스 바 -->
+        <div class="issue-bar">
+            <span>ISSUE NO. 01 / 2026 ARCHIVE</span>
+            <span class="issue-tag">● ACTIVE CURATOR</span>
+            <span>SEOUL, KR</span>
+        </div>
+
+        <!-- 커버 / 인트로 -->
+        <header class="cover-hero">
+            <span class="cover-meta">PORTFOLIO & LIFE VISION</span>
+            <h1 class="cover-title">HYUNTER</h1>
+            <p class="cover-subtitle">박서현 (현터) — 새로운 경험을 사냥하고, 진짜 나다운 길을 찾는 탐험가</p>
+            <p class="cover-desc">
+                반가워! 내 이름은 <strong>박서현</strong>, 사람들은 나를 <strong>현터(hyunter)</strong>라고 불러. 내 이름의 '현'과 사냥꾼을 뜻하는 'hunter'를 합친 이름이야. 새로운 경험을 탐구하고, 사냥꾼처럼 목표에 몰입하며 성장하는 걸 좋아해.<br><br>
+                남들과 끊임없이 비교하고 경쟁하느라 바쁜 세상 속에서, 친구들이 정해진 틀에 갇히지 않고 <strong>‘진짜 나만의 가능성’과 ‘진짜 내 삶’</strong>을 찾을 수 있도록 용기와 영감을 나누고 싶어!
+            </p>
+
+            <!-- 필수 항목: 해시태그 3가지 -->
+            <div class="keyword-badges">
+                <span class="badge">#Experience_Hunter</span>
+                <span class="badge">#Real_Self_Journey</span>
+                <span class="badge">#Inspire_Your_Path</span>
+            </div>
+        </header>
+
+        <!-- 필수 항목: 사진 프레임 -->
+        <section class="photo-container">
+            <div class="photo-frame">
+                <img src="./hyunter.webp" alt="현터(박서현) 프로필 사진">
+                <div class="photo-overlay">
+                    <div>
+                        <div class="photo-caption-title">HYUNTER (PARK SEO-HYUN)</div>
+                        <div class="photo-caption-sub">"타인과의 비교 대신, 내 안의 진짜 가능성을 향해"</div>
+                    </div>
+                    <span class="photo-badge-note">FIG. 01 — THE EXPLORER</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 1: 3 KEYWORDS ARCHIVE -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <div>
+                    <span class="section-num">01</span>
+                    <span class="section-title">Vision & Keywords</span>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">HOW I LIVE & GROW</span>
+            </div>
+
+            <div class="archive-grid">
+                <!-- 키워드 1 -->
+                <article class="archive-card">
+                    <div class="card-tag">#01 Experience_Hunter</div>
+                    <div class="card-heading">새로운 경험의 사냥꾼</div>
+                    <p class="card-text">
+                        새로운 분야를 배우고 탐구하는 건 언제나 설레는 일이야. 목표가 생기면 사냥꾼처럼 집중해서 몰입하고, 그 과정을 통해 스스로 한 단계씩 단단하게 성장해 나가.
+                    </p>
+                </article>
+
+                <!-- 키워드 2 -->
+                <article class="archive-card">
+                    <div class="card-tag">#02 Real_Self_Journey</div>
+                    <div class="card-heading">진짜 나를 찾아가는 여정</div>
+                    <p class="card-text">
+                        사회가 강요하는 화려함이나 남들과의 비교에서 한 걸음 물러나, "진짜 내가 좋아하는 것은 무엇일까?"를 고민하며 고유한 나만의 색깔을 지켜가는 길을 걸어가.
+                    </p>
+                </article>
+
+                <!-- 키워드 3 -->
+                <article class="archive-card">
+                    <div class="card-tag">#03 Inspire_Your_Path</div>
+                    <div class="card-heading">스스로의 길을 찾는 용기</div>
+                    <p class="card-text">
+                        누구나 저마다의 특별한 가능성을 품고 있어. 주저하고 불안해하는 친구들에게 "너만의 속도로 가도 괜찮아"라는 응원과 영감을 전하는 든든한 페이스메이커가 되고 싶어.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <!-- 섹션 2: CURATION / MY ESSENTIALS -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <div>
+                    <span class="section-num">02</span>
+                    <span class="section-title">My Essentials</span>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">ON REPEAT & INSPIRATION</span>
+            </div>
+
+            <div class="curation-list">
+                <!-- 에센셜 1: 음악 -->
+                <div class="curation-item">
+                    <div class="item-left">
+                        <div class="item-icon">🎧</div>
+                        <div>
+                            <div class="item-category">Soundtrack / Focus & Energy</div>
+                            <div class="item-title">실리카겔 — NO PAIN & 백예린 — Square</div>
+                            <div class="item-desc">새로운 도전을 시작할 때, 나만의 속도로 달릴 수 있는 에너지를 불어넣어 주는 음악들.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 에센셜 2: 시각적 영감 -->
+                <div class="curation-item">
+                    <div class="item-left">
+                        <div class="item-icon">🎬</div>
+                        <div>
+                            <div class="item-category">Visual Inspiration</div>
+                            <div class="item-title">영화 《스파이더맨: 뉴 유니버스》</div>
+                            <div class="item-desc">"누구나 자신만의 가면을 쓸 수 있다"는 메시지처럼, 나만의 정체성을 찾아가는 용기를 주는 작품.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 에센셜 3: 좋아하는 아지트/순간 -->
+                <div class="curation-item">
+                    <div class="item-left">
+                        <div class="item-icon">🌱</div>
+                        <div>
+                            <div class="item-category">Favorite Scene</div>
+                            <div class="item-title">자연 속에서 온전히 나에게 집중하는 시간</div>
+                            <div class="item-desc">복잡한 경쟁의 소음을 끄고, 바람과 나무 사이에서 마음의 중심을 다시 잡는 순간.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 3: 3문 3답 인터뷰 -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <div>
+                    <span class="section-num">03</span>
+                    <span class="section-title">Deep Interview</span>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">3 QUESTIONS FOR HYUNTER</span>
+            </div>
+
+            <div class="interview-box">
+                <div class="qa-card">
+                    <div class="qa-q">
+                        <span class="q-prefix">Q1.</span>
+                        <span>'현터(hyunter)'라는 별칭은 어떻게 만들어진 거야?</span>
+                    </div>
+                    <p class="qa-a">
+                        👉 내 이름 <strong>‘박서현’의 ‘현’</strong>과 사냥꾼을 뜻하는 <strong>‘hunter’의 ‘터’</strong>를 조합했어. 새로운 경험을 탐구하는 것을 좋아하고, 마치 사냥꾼처럼 목표에 집중하면서 끊임없이 배우고 성장하겠다는 내 삶의 다짐이자 비전이야!
+                    </p>
+                </div>
+
+                <div class="qa-card">
+                    <div class="qa-q">
+                        <span class="q-prefix">Q2.</span>
+                        <span>요즘 친구들을 볼 때 가장 안타깝거나 마음 쓰이는 부분이 있다면?</span>
+                    </div>
+                    <p class="qa-a">
+                        👉 끊임없이 화려함과 경쟁을 강조하는 사회 속에서, 자꾸 남과 자신을 비교하느라 정작 <strong>‘진짜 내 가능성’과 ‘진짜 내 삶’</strong>을 살지 못하는 모습들. 너는 이미 그 자체로 빛나는 잠재력을 가지고 있는데 말이지.
+                    </p>
+                </div>
+
+                <div class="qa-card">
+                    <div class="qa-q">
+                        <span class="q-prefix">Q3.</span>
+                        <span>앞으로 친구들과 어떤 이야기를 나누며 살아가고 싶어?</span>
+                    </div>
+                    <p class="qa-a">
+                        👉 다른 이들이 <strong>‘스스로의 길을 찾도록 돕고 용기와 영감을 주는 삶’</strong>을 살고 싶어. 정해진 정답을 따라가는 게 아니라, 네가 진짜 가슴 뛰는 너만의 길을 걸어갈 수 있도록 곁에서 든든하게 응원해줄게!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 4: 밸런스 게임 -->
+        <section style="margin-bottom: 4rem;">
+            <div class="section-header">
+                <div>
+                    <span class="section-num">04</span>
+                    <span class="section-title">Taste Balance Game</span>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">CLICK TO REVEAL</span>
+            </div>
+
+            <div class="balance-box">
+                <!-- 질문 1 -->
+                <details class="balance-card">
+                    <summary class="balance-summary">
+                        <span>Q1. 탕수육: 바삭함 유지 '찍먹' vs 소스 촉촉 '부먹'?</span>
+                        <span class="toggle-btn">ANSWER ▾</span>
+                    </summary>
+                    <div class="balance-content">
+                        <div class="balance-choice">👉 선택: 완전 찍먹!</div>
+                        바삭바삭한 튀김옷의 갓 튀긴 식감은 절대 포기 못 해! 소스는 살짝만 콕 찍어 먹는 게 진정한 미식의 길이지.
+                    </div>
+                </details>
+
+                <!-- 질문 2 -->
+                <details class="balance-card">
+                    <summary class="balance-summary">
+                        <span>Q2. 에너지 충전: 집에서 넷플릭스 뒹굴기 vs 새로운 공간 탐험하기?</span>
+                        <span class="toggle-btn">ANSWER ▾</span>
+                    </summary>
+                    <div class="balance-content">
+                        <div class="balance-choice">👉 선택: 새로운 영감 공간 탐험하기!</div>
+                        침대도 달콤하지만, 카메라 하나 메고 낯선 골목이나 독립서점, 안 가본 카페를 디깅할 때 진짜 '현터다운' 에너지가 풀충전돼.
+                    </div>
+                </details>
+
+                <!-- 질문 3 -->
+                <details class="balance-card">
+                    <summary class="balance-summary">
+                        <span>Q3. 공부 & 프로젝트: 마감 직전 벼락치기 몰입 vs 미리미리 계획형?</span>
+                        <span class="toggle-btn">ANSWER ▾</span>
+                    </summary>
+                    <div class="balance-content">
+                        <div class="balance-choice">👉 선택: 솔직히 마감 직전 벼락치기 몰입파 ⚡</div>
+                        '이번엔 꼭 2주 전부터 해야지' 다짐하지만, 결국 마감 24시간 전의 초인적인 집중력과 도파민이 최고더라구... (너도 공감하지?)
+                    </div>
+                </details>
+
+                <!-- 질문 4 -->
+                <details class="balance-card">
+                    <summary class="balance-summary">
+                        <span>Q4. 마라탕: 순한맛 0단계 vs 혀끝 얼얼한 2~3단계?</span>
+                        <span class="toggle-btn">ANSWER ▾</span>
+                    </summary>
+                    <div class="balance-content">
+                        <div class="balance-choice">👉 선택: 무조건 2단계 이상!</div>
+                        마라탕은 입안이 얼얼해야 제맛! 옥수수면, 푸주, 분모자 듬뿍 넣고 땀 뻘뻘 흘리며 스트레스 싹 날려버리기.
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- 섹션 5: 방명록 & 소통 창구 -->
+        <section>
+            <div class="section-header">
+                <div>
+                    <span class="section-num">05</span>
+                    <span class="section-title">Drop a Note</span>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">GUESTBOOK</span>
+            </div>
+
+            <div class="contact-card">
+                <div class="contact-header">
+                    <h3>💬 현터와 대화 나누기 (방명록)</h3>
+                    <p>페이지를 둘러본 소감이나, 너만의 고민, 요즘 찾고 있는 '진짜 나다운 순간'에 대해 자유롭게 들려줘!</p>
+                </div>
+
+                <form action="#" method="post">
+                    <div class="form-group">
+                        <label class="form-label" for="guest-name">너의 닉네임 또는 이름</label>
+                        <input class="form-input" type="text" id="guest-name" name="guest-name" placeholder="예: 나다운 길을 찾는 친구, 익명" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="guest-rec">너에게 큰 힘이 되어준 음악이나 문장이 있다면? (선택)</label>
+                        <input class="form-input" type="text" id="guest-rec" name="guest-rec" placeholder="너의 영감을 함께 나눠줘!">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="guest-msg">현터에게 하고 싶은 말</label>
+                        <textarea class="form-textarea" id="guest-msg" name="guest-msg" placeholder="고민, 응원, 질문 무엇이든 편하게 적어줘 :)" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">MESSAGE SEND ✦</button>
+                </form>
+
+                <!-- SNS 채널 -->
+                <div class="sns-links">
+                    <a href="https://instagram.com" target="_blank" class="sns-btn">INSTAGRAM @hyunter</a>
+                    <a href="#" target="_blank" class="sns-btn">KAKAO OPEN TALK</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 푸터 -->
+        <footer class="magazine-footer">
+            <p>© 2026 HYUNTER (현터). ARCHIVE NO. 01 — ALL RIGHTS RESERVED.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
